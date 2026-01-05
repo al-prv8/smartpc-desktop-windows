@@ -7,26 +7,27 @@ using SensePC.Desktop.WinUI.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Windows.UI;
 
 namespace SensePC.Desktop.WinUI.Views.Dialogs
 {
     /// <summary>
-    /// Dialog for assigning/unassigning users to a PC - built programmatically
+    /// Dialog for assigning/unassigning users to a PC - matches website functionality
+    /// Shows users with individual Assign/Unassign buttons
     /// </summary>
     public sealed class AssignUserDialog : ContentDialog
     {
         private readonly PCInstance _pc;
         private readonly SensePCApiService _apiService;
         
-        private ListView _teamMembersListView;
         private StackPanel _loadingUsersPanel;
-        private StackPanel _savingPanel;
+        private StackPanel _usersListPanel;
         private TextBlock _emptyStateText;
         private TextBlock _errorText;
         
         private List<TeamMember> _teamMembers = new();
-        private HashSet<string> _initiallyAssignedIds = new();
+        private HashSet<string> _assignedMemberIds = new();
 
         public bool AssignmentChanged { get; private set; }
 
@@ -36,55 +37,44 @@ namespace SensePC.Desktop.WinUI.Views.Dialogs
             _pc = pc;
             _apiService = new SensePCApiService(new SecureStorage());
 
-            Title = "Assign Users";
-            PrimaryButtonText = "Save";
-            CloseButtonText = "Cancel";
-            DefaultButton = ContentDialogButton.Primary;
+            Title = $"Assign Users to {_pc.SystemName}";
+            CloseButtonText = "Close";
+            DefaultButton = ContentDialogButton.Close;
+
+            // No primary button - users assign/unassign individually like website
 
             BuildUI();
 
-            PrimaryButtonClick += PrimaryButton_Click;
-            Opened += AssignUserDialog_Opened;
+            Loaded += OnDialogLoaded;
         }
 
         private void BuildUI()
         {
-            var mainStack = new StackPanel { Spacing = 16, MinWidth = 400 };
+            var mainStack = new StackPanel { Spacing = 16, MinWidth = 420 };
 
-            // PC name header
-            var pcInfoBox = new Border
-            {
-                Background = new SolidColorBrush(Color.FromArgb(40, 95, 111, 255)),
-                CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(12)
-            };
-            var pcInfoStack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-            pcInfoStack.Children.Add(new FontIcon { Glyph = "\uE7F4", FontSize = 20 });
-            var pcTextStack = new StackPanel();
-            pcTextStack.Children.Add(new TextBlock { Text = "Assigning users to:", Opacity = 0.7, FontSize = 12 });
-            pcTextStack.Children.Add(new TextBlock { Text = _pc.SystemName, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
-            pcInfoStack.Children.Add(pcTextStack);
-            pcInfoBox.Child = pcInfoStack;
-            mainStack.Children.Add(pcInfoBox);
-
-            // Instructions
+            // Description
             mainStack.Children.Add(new TextBlock
             {
-                Text = "Select team members who should have access to this PC:",
+                Text = "Select users to assign to this PC.",
                 TextWrapping = TextWrapping.Wrap,
-                Opacity = 0.8
+                Opacity = 0.8,
+                FontSize = 14
             });
 
             // Loading users panel
             _loadingUsersPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 8,
+                Spacing = 12,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 20, 0, 20)
+                Margin = new Thickness(0, 30, 0, 30)
             };
             _loadingUsersPanel.Children.Add(new ProgressRing { IsActive = true, Width = 24, Height = 24 });
-            _loadingUsersPanel.Children.Add(new TextBlock { Text = "Loading team members...", VerticalAlignment = VerticalAlignment.Center });
+            _loadingUsersPanel.Children.Add(new TextBlock 
+            { 
+                Text = "Loading team members...", 
+                VerticalAlignment = VerticalAlignment.Center 
+            });
             mainStack.Children.Add(_loadingUsersPanel);
 
             // Empty state text
@@ -94,30 +84,18 @@ namespace SensePC.Desktop.WinUI.Views.Dialogs
                 TextWrapping = TextWrapping.Wrap,
                 Opacity = 0.6,
                 HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 20, 0, 20),
                 Visibility = Visibility.Collapsed
             };
             mainStack.Children.Add(_emptyStateText);
 
-            // Team members list
-            _teamMembersListView = new ListView
+            // Users list panel (will be populated dynamically)
+            _usersListPanel = new StackPanel
             {
-                SelectionMode = ListViewSelectionMode.Multiple,
-                Height = 250,
-                Visibility = Visibility.Collapsed
-            };
-            mainStack.Children.Add(_teamMembersListView);
-
-            // Saving panel
-            _savingPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
                 Spacing = 8,
-                HorizontalAlignment = HorizontalAlignment.Center,
                 Visibility = Visibility.Collapsed
             };
-            _savingPanel.Children.Add(new ProgressRing { IsActive = true, Width = 16, Height = 16 });
-            _savingPanel.Children.Add(new TextBlock { Text = "Saving assignments...", VerticalAlignment = VerticalAlignment.Center });
-            mainStack.Children.Add(_savingPanel);
+            mainStack.Children.Add(_usersListPanel);
 
             // Error text
             _errorText = new TextBlock
@@ -131,7 +109,12 @@ namespace SensePC.Desktop.WinUI.Views.Dialogs
             Content = mainStack;
         }
 
-        private async void AssignUserDialog_Opened(ContentDialog sender, ContentDialogOpenedEventArgs args)
+        private async void OnDialogLoaded(object sender, RoutedEventArgs e)
+        {
+            await LoadTeamMembersAsync();
+        }
+
+        private async Task LoadTeamMembersAsync()
         {
             try
             {
@@ -148,25 +131,19 @@ namespace SensePC.Desktop.WinUI.Views.Dialogs
                     return;
                 }
 
-                _teamMembersListView.Visibility = Visibility.Visible;
-
+                // Determine which members are already assigned
                 foreach (var member in _teamMembers)
                 {
-                    var item = new ListViewItem
-                    {
-                        Tag = member.Id,
-                        Content = CreateMemberItem(member)
-                    };
-
-                    _teamMembersListView.Items.Add(item);
-
-                    // Pre-select if already assigned
                     if (member.AssignedPCs != null && member.AssignedPCs.Contains(_pc.InstanceId))
                     {
-                        _initiallyAssignedIds.Add(member.Id);
-                        _teamMembersListView.SelectedItems.Add(item);
+                        _assignedMemberIds.Add(member.Id);
                     }
                 }
+
+                // Build user list with Assign/Unassign buttons
+                BuildUsersList();
+
+                _usersListPanel.Visibility = Visibility.Visible;
             }
             catch (Exception ex)
             {
@@ -176,19 +153,40 @@ namespace SensePC.Desktop.WinUI.Views.Dialogs
             }
         }
 
-        private Grid CreateMemberItem(TeamMember member)
+        private void BuildUsersList()
         {
-            var grid = new Grid { Padding = new Thickness(4) };
+            _usersListPanel.Children.Clear();
 
-            var stack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+            foreach (var member in _teamMembers)
+            {
+                var userRow = CreateUserRow(member);
+                _usersListPanel.Children.Add(userRow);
+            }
+        }
 
-            // Avatar circle
+        private Border CreateUserRow(TeamMember member)
+        {
+            var border = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(20, 128, 128, 128)),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(12),
+                Tag = member.Id
+            };
+
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            // Avatar
             var avatarBorder = new Border
             {
-                Width = 36,
-                Height = 36,
-                CornerRadius = new CornerRadius(18),
-                Background = new SolidColorBrush(Color.FromArgb(255, 95, 111, 255))
+                Width = 40,
+                Height = 40,
+                CornerRadius = new CornerRadius(20),
+                Background = new SolidColorBrush(Color.FromArgb(255, 95, 111, 255)),
+                Margin = new Thickness(0, 0, 12, 0)
             };
             var initials = GetInitials(member.Name ?? member.Email);
             avatarBorder.Child = new TextBlock
@@ -199,14 +197,16 @@ namespace SensePC.Desktop.WinUI.Views.Dialogs
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(Colors.White)
             };
-            stack.Children.Add(avatarBorder);
+            Grid.SetColumn(avatarBorder, 0);
+            grid.Children.Add(avatarBorder);
 
             // Name and email
-            var infoStack = new StackPanel();
+            var infoStack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
             infoStack.Children.Add(new TextBlock
             {
                 Text = member.Name ?? member.Email,
-                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                FontSize = 14
             });
             if (!string.IsNullOrEmpty(member.Name) && !string.IsNullOrEmpty(member.Email))
             {
@@ -217,10 +217,85 @@ namespace SensePC.Desktop.WinUI.Views.Dialogs
                     FontSize = 12
                 });
             }
-            stack.Children.Add(infoStack);
+            Grid.SetColumn(infoStack, 1);
+            grid.Children.Add(infoStack);
 
-            grid.Children.Add(stack);
-            return grid;
+            // Assign/Unassign button
+            bool isAssigned = _assignedMemberIds.Contains(member.Id);
+            var actionButton = new Button
+            {
+                Content = isAssigned ? "Unassign" : "Assign",
+                Tag = member.Id,
+                MinWidth = 80
+            };
+            
+            if (isAssigned)
+            {
+                // Red-ish style for unassign
+                actionButton.Background = new SolidColorBrush(Color.FromArgb(40, 255, 80, 80));
+            }
+            
+            actionButton.Click += async (s, e) => await OnAssignButtonClick(member, actionButton);
+            Grid.SetColumn(actionButton, 2);
+            grid.Children.Add(actionButton);
+
+            border.Child = grid;
+            return border;
+        }
+
+        private async Task OnAssignButtonClick(TeamMember member, Button button)
+        {
+            button.IsEnabled = false;
+            var originalContent = button.Content;
+            button.Content = "...";
+
+            try
+            {
+                bool isCurrentlyAssigned = _assignedMemberIds.Contains(member.Id);
+                bool success;
+
+                if (isCurrentlyAssigned)
+                {
+                    // Unassign
+                    success = await _apiService.UnassignPCAsync(_pc.InstanceId, member.Id);
+                    if (success)
+                    {
+                        _assignedMemberIds.Remove(member.Id);
+                        button.Content = "Assign";
+                        button.Background = null;
+                        AssignmentChanged = true;
+                    }
+                }
+                else
+                {
+                    // Assign
+                    success = await _apiService.AssignPCAsync(_pc.InstanceId, member.Id, _pc.SystemName);
+                    if (success)
+                    {
+                        _assignedMemberIds.Add(member.Id);
+                        button.Content = "Unassign";
+                        button.Background = new SolidColorBrush(Color.FromArgb(40, 255, 80, 80));
+                        AssignmentChanged = true;
+                    }
+                }
+
+                if (!success)
+                {
+                    button.Content = originalContent;
+                    _errorText.Text = $"Failed to {(isCurrentlyAssigned ? "unassign" : "assign")} user.";
+                    _errorText.Visibility = Visibility.Visible;
+                }
+            }
+            catch (Exception ex)
+            {
+                button.Content = originalContent;
+                _errorText.Text = $"Error: {ex.Message}";
+                _errorText.Visibility = Visibility.Visible;
+            }
+            finally
+            {
+                button.IsEnabled = true;
+            }
         }
 
         private string GetInitials(string name)
@@ -231,75 +306,6 @@ namespace SensePC.Desktop.WinUI.Views.Dialogs
             if (parts.Length >= 2)
                 return $"{parts[0][0]}{parts[1][0]}".ToUpper();
             return name.Substring(0, Math.Min(2, name.Length)).ToUpper();
-        }
-
-        private async void PrimaryButton_Click(ContentDialog sender, ContentDialogButtonClickEventArgs args)
-        {
-            var deferral = args.GetDeferral();
-
-            try
-            {
-                _savingPanel.Visibility = Visibility.Visible;
-                _errorText.Visibility = Visibility.Collapsed;
-                IsPrimaryButtonEnabled = false;
-                _teamMembersListView.IsEnabled = false;
-
-                // Get currently selected member IDs
-                var selectedIds = new HashSet<string>();
-                foreach (var item in _teamMembersListView.SelectedItems)
-                {
-                    if (item is ListViewItem lvItem && lvItem.Tag is string memberId)
-                    {
-                        selectedIds.Add(memberId);
-                    }
-                }
-
-                // Determine who to assign (newly selected)
-                var toAssign = selectedIds.Except(_initiallyAssignedIds);
-                // Determine who to unassign (previously selected but not now)
-                var toUnassign = _initiallyAssignedIds.Except(selectedIds);
-
-                bool hasError = false;
-
-                // Assign new users
-                foreach (var memberId in toAssign)
-                {
-                    var member = _teamMembers.FirstOrDefault(m => m.Id == memberId);
-                    var success = await _apiService.AssignPCAsync(_pc.InstanceId, memberId, _pc.SystemName);
-                    if (!success) hasError = true;
-                }
-
-                // Unassign removed users
-                foreach (var memberId in toUnassign)
-                {
-                    var success = await _apiService.UnassignPCAsync(_pc.InstanceId, memberId);
-                    if (!success) hasError = true;
-                }
-
-                if (hasError)
-                {
-                    args.Cancel = true;
-                    _errorText.Text = "Some assignments failed. Please try again.";
-                    _errorText.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    AssignmentChanged = toAssign.Any() || toUnassign.Any();
-                }
-            }
-            catch (Exception ex)
-            {
-                args.Cancel = true;
-                _errorText.Text = $"Error: {ex.Message}";
-                _errorText.Visibility = Visibility.Visible;
-            }
-            finally
-            {
-                _savingPanel.Visibility = Visibility.Collapsed;
-                IsPrimaryButtonEnabled = true;
-                _teamMembersListView.IsEnabled = true;
-                deferral.Complete();
-            }
         }
     }
 }

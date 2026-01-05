@@ -226,5 +226,11 @@ namespace SensePC.Desktop.WinUI.Views.Dialogs
         }
     }
 
-    internal record IdleTimeoutOption(string Value, string Label, int Minutes);
+    internal class IdleTimeoutOption
+    {
+        public string Value { get; }
+        public string Label { get; }
+        public int Minutes { get; }
+        public IdleTimeoutOption(string value, string label, int minutes) { Value = value; Label = label; Minutes = minutes; }
+    }
 }

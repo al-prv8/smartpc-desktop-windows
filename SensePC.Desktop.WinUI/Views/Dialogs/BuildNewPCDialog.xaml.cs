@@ -543,6 +543,18 @@ namespace SensePC.Desktop.WinUI.Views.Dialogs
     }
 
     // Helper classes
-    internal record StorageOption(string Value, string Label, double HourlyRate);
-    internal record RegionOption(string Value, string Label);
+    internal class StorageOption
+    {
+        public string Value { get; }
+        public string Label { get; }
+        public double HourlyRate { get; }
+        public StorageOption(string value, string label, double hourlyRate) { Value = value; Label = label; HourlyRate = hourlyRate; }
+    }
+
+    internal class RegionOption
+    {
+        public string Value { get; }
+        public string Label { get; }
+        public RegionOption(string value, string label) { Value = value; Label = label; }
+    }
 }

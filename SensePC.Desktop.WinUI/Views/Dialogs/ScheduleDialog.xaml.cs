@@ -530,5 +530,10 @@ namespace SensePC.Desktop.WinUI.Views.Dialogs
         }
     }
 
-    internal record TimeZoneOption(string Id, string DisplayName);
+    internal class TimeZoneOption
+    {
+        public string Id { get; }
+        public string DisplayName { get; }
+        public TimeZoneOption(string id, string displayName) { Id = id; DisplayName = displayName; }
+    }
 }
