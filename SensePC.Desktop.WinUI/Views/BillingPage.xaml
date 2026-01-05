@@ -1,0 +1,784 @@
+<Page
+    x:Class="SensePC.Desktop.WinUI.Views.BillingPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent">
+
+    <Grid Padding="32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Billing &amp; Payments" 
+                           Style="{StaticResource TitleTextBlockStyle}"
+                           Margin="0,0,0,4"/>
+                <TextBlock Text="Manage your wallet, payment methods, and view billing history" 
+                           Style="{StaticResource BodyTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </StackPanel>
+            
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <Button x:Name="ManagePaymentMethodsButton" 
+                        Style="{StaticResource AccentButtonStyle}"
+                        Click="ManagePaymentMethods_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE8C7;" FontSize="14"/>
+                        <TextBlock Text="Manage Payment Methods"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="RefreshButton" Click="RefreshButton_Click" ToolTipService.ToolTip="Refresh">
+                    <FontIcon Glyph="&#xE72C;" FontSize="14"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Main Content -->
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="24">
+                
+                <!-- Stats Cards Row -->
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Wallet Balance -->
+                    <Border Grid.Column="0" 
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1" CornerRadius="8" Padding="24">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Text="Wallet Balance" 
+                                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <Border Grid.Row="0" Grid.Column="1" 
+                                    Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                    CornerRadius="16" Padding="8,4">
+                                <FontIcon Glyph="&#xE7F2;" FontSize="12" Foreground="White"/>
+                            </Border>
+                            
+                            <TextBlock Grid.Row="1" Grid.ColumnSpan="2"
+                                       x:Name="BalanceText" Text="$0.00" 
+                                       FontSize="36" FontWeight="Bold" Margin="0,8,0,0"/>
+                            
+                            <TextBlock Grid.Row="2" Grid.ColumnSpan="2"
+                                       x:Name="LastRechargeText" 
+                                       Text="Last recharged: --"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       Margin="0,8,0,0"/>
+                        </Grid>
+                    </Border>
+                    
+                    <!-- Monthly Spending -->
+                    <Border Grid.Column="1" 
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1" CornerRadius="8" Padding="24">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Text="Monthly Spending" 
+                                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <Border Grid.Row="0" Grid.Column="1" 
+                                    Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}"
+                                    CornerRadius="16" Padding="8,4">
+                                <FontIcon Glyph="&#xE9D2;" FontSize="12"/>
+                            </Border>
+                            
+                            <TextBlock Grid.Row="1" Grid.ColumnSpan="2"
+                                       x:Name="SpendingText" Text="$0.00" 
+                                       FontSize="36" FontWeight="Bold" Margin="0,8,0,0"/>
+                            
+                            <StackPanel Grid.Row="2" Grid.ColumnSpan="2" 
+                                        Orientation="Horizontal" Spacing="4" Margin="0,8,0,0">
+                                <FontIcon x:Name="TrendIcon" Glyph="&#xE738;" FontSize="12"/>
+                                <TextBlock x:Name="SpendingChangeText" 
+                                           Text="0% from last month"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    
+                    <!-- Promo & Cashback -->
+                    <Border Grid.Column="2" 
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1" CornerRadius="8" Padding="24">
+                        <Grid RowSpacing="16">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Text="Promo &amp; Cashback" 
+                                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE7C1;" FontSize="14" 
+                                                  Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                                        <TextBlock Text="Promo" Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="PromoText" Text="$0.00" 
+                                               FontSize="24" FontWeight="SemiBold"
+                                               Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                                </StackPanel>
+                                
+                                <Border Grid.Column="1" Width="1" 
+                                        Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                        Margin="12,0"/>
+                                
+                                <StackPanel Grid.Column="2" Spacing="4" HorizontalAlignment="Right">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE735;" FontSize="14" 
+                                                  Foreground="{ThemeResource SystemFillColorSuccessBrush}"/>
+                                        <TextBlock Text="Cashback" Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="CashbackText" Text="$0.00" 
+                                               FontSize="24" FontWeight="SemiBold"
+                                               Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                                               HorizontalAlignment="Right"/>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- Quick Recharge & Payment Methods Row -->
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Quick Recharge & Auto-Recharge -->
+                    <Border Grid.Column="0" 
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1" CornerRadius="8" Padding="24">
+                        <StackPanel Spacing="20">
+                            <TextBlock Text="Quick Recharge" 
+                                       Style="{StaticResource SubtitleTextBlockStyle}"
+                                       FontWeight="SemiBold"/>
+                            
+                            <!-- Amount Selection -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Select amount" 
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <ListView x:Name="RechargeAmountsListView" 
+                                          SelectionMode="Single"
+                                          SelectionChanged="RechargeAmount_SelectionChanged">
+                                    <ListView.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="8"/>
+                                        </ItemsPanelTemplate>
+                                    </ListView.ItemsPanel>
+                                </ListView>
+                            </StackPanel>
+                            
+                            <!-- Custom Amount -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Or enter custom amount" 
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <NumberBox x:Name="CustomAmountBox" 
+                                               PlaceholderText="Enter amount"
+                                               Minimum="5" Maximum="1000"
+                                               SpinButtonPlacementMode="Compact"/>
+                                    <Button Grid.Column="1" Content="Add" 
+                                            Click="CustomRecharge_Click"/>
+                                </Grid>
+                            </StackPanel>
+                            
+                            <!-- Payment Method Selector -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Payment method" 
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <ComboBox x:Name="PaymentMethodCombo" 
+                                          HorizontalAlignment="Stretch"
+                                          PlaceholderText="Select payment method"
+                                          DisplayMemberPath="DisplayName"/>
+                            </StackPanel>
+                            
+                            <!-- Recharge Button -->
+                            <Button x:Name="RechargeButton" 
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    HorizontalAlignment="Stretch"
+                                    Click="RechargeButton_Click"
+                                    Padding="16,12">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE710;" FontSize="16"/>
+                                    <TextBlock Text="Add Funds"/>
+                                </StackPanel>
+                            </Button>
+                            
+                            <!-- Separator -->
+                            <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}"/>
+                            
+                            <!-- Auto-Recharge Settings -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Auto-Recharge" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Automatically add funds when balance is low"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <ToggleSwitch x:Name="AutoRechargeToggle" Grid.Column="1"
+                                              OnContent="" OffContent=""
+                                              Toggled="AutoRechargeToggle_Toggled"/>
+                            </Grid>
+                            
+                            <!-- Auto-Recharge Options -->
+                            <StackPanel x:Name="AutoRechargeSettingsPanel" Spacing="16" Visibility="Collapsed">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="When balance falls below" 
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <NumberBox x:Name="ThresholdBox" 
+                                               PlaceholderText="Threshold"
+                                               Minimum="5" Maximum="500" Value="10"
+                                               SpinButtonPlacementMode="Compact"/>
+                                </StackPanel>
+                                
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="Recharge amount" 
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <NumberBox x:Name="AutoRechargeAmountBox" 
+                                               PlaceholderText="Amount"
+                                               Minimum="10" Maximum="500" Value="50"
+                                               SpinButtonPlacementMode="Compact"/>
+                                </StackPanel>
+                                
+                                <Button x:Name="SaveAutoRechargeButton" 
+                                        Content="Save Settings"
+                                        HorizontalAlignment="Stretch"
+                                        Click="SaveAutoRecharge_Click"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Pricing Plans (Only Pay For What You Use) -->
+                    <Border Grid.Column="1" 
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1" CornerRadius="8" Padding="24">
+                        <StackPanel Spacing="16">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Only Pay For What You Use" 
+                                           Style="{StaticResource SubtitleTextBlockStyle}"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Text="Choose your service and billing cycle" 
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            </StackPanel>
+                            
+                            <!-- Service Tabs -->
+                            <Pivot x:Name="PricingPivot">
+                                <!-- Sense PC Tab -->
+                                <PivotItem>
+                                    <PivotItem.Header>
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <FontIcon Glyph="&#xE7F4;" FontSize="14"/>
+                                            <TextBlock Text="Sense PC"/>
+                                        </StackPanel>
+                                    </PivotItem.Header>
+                                    
+                                    <StackPanel Spacing="12" Margin="0,16,0,0">
+                                        <!-- Hourly -->
+                                        <Border Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                                                CornerRadius="8" Padding="16">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border Grid.Column="0" Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                                        CornerRadius="6" Width="36" Height="36" Margin="0,0,12,0">
+                                                    <FontIcon Glyph="&#xE823;" FontSize="16" Foreground="White"
+                                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel Grid.Column="1">
+                                                    <TextBlock Text="Hourly" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="Flexible, pay per hour" 
+                                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="Per use" VerticalAlignment="Center"
+                                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                            </Grid>
+                                        </Border>
+                                        
+                                        <!-- Daily (Popular) -->
+                                        <Border Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                                                BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                                                BorderThickness="2" CornerRadius="8" Padding="16">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border Grid.Column="0" Background="{ThemeResource SystemFillColorSuccessBrush}"
+                                                        CornerRadius="6" Width="36" Height="36" Margin="0,0,12,0">
+                                                    <FontIcon Glyph="&#xE787;" FontSize="16" Foreground="White"
+                                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel Grid.Column="1">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <TextBlock Text="Daily" FontWeight="SemiBold"/>
+                                                        <Border Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                                                CornerRadius="4" Padding="4,1">
+                                                            <TextBlock Text="Popular" FontSize="10" Foreground="White"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                    <TextBlock Text="Up to 10 hrs, save 10%" 
+                                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="$9.99/day" VerticalAlignment="Center"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                                            </Grid>
+                                        </Border>
+                                        
+                                        <!-- Monthly -->
+                                        <Border Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                                                CornerRadius="8" Padding="16">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border Grid.Column="0" Background="#8B5CF6"
+                                                        CornerRadius="6" Width="36" Height="36" Margin="0,0,12,0">
+                                                    <FontIcon Glyph="&#xE8BF;" FontSize="16" Foreground="White"
+                                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel Grid.Column="1">
+                                                    <TextBlock Text="Monthly" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="180 hrs, save 15%" 
+                                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="$179.99/mo" VerticalAlignment="Center"
+                                                           FontWeight="SemiBold" Foreground="#8B5CF6"/>
+                                            </Grid>
+                                        </Border>
+                                    </StackPanel>
+                                </PivotItem>
+                                
+                                <!-- Sense Cloud Tab -->
+                                <PivotItem>
+                                    <PivotItem.Header>
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <FontIcon Glyph="&#xEDA2;" FontSize="14"/>
+                                            <TextBlock Text="Sense Cloud"/>
+                                        </StackPanel>
+                                    </PivotItem.Header>
+                                    
+                                    <StackPanel Spacing="20" Margin="0,16,0,0">
+                                        <!-- Storage Tier -->
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="Storage Tier" FontWeight="SemiBold"/>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="T-1 (20GB)" 
+                                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                <TextBlock Grid.Column="1" Text="T-50 (1000GB)" 
+                                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                           HorizontalAlignment="Right"/>
+                                            </Grid>
+                                            <Slider x:Name="StorageTierSlider" Minimum="1" Maximum="50" Value="1" 
+                                                    ValueChanged="StorageTierSlider_ValueChanged"/>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" x:Name="StorageTierText" 
+                                                           Text="Selected: T-1 (20 GB)" FontWeight="SemiBold"/>
+                                                <TextBlock Grid.Column="1" x:Name="StoragePriceText" 
+                                                           Text="$0.25 / month" FontWeight="SemiBold"
+                                                           Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                                            </Grid>
+                                        </StackPanel>
+                                        
+                                        <!-- Data Center Location -->
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="Data Center Location" FontWeight="SemiBold"/>
+                                            <ComboBox x:Name="DataCenterCombo" HorizontalAlignment="Stretch">
+                                                <ComboBoxItem Content="East Coast (US East)" IsSelected="True"/>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        
+                                        <!-- Info Note -->
+                                        <Border Background="{ThemeResource ControlFillColorTertiaryBrush}"
+                                                CornerRadius="8" Padding="12">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="&#xE946;" FontSize="14" 
+                                                          Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                <TextBlock Text="Storage is billed monthly. Your disk remains allocated to preserve your data."
+                                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                           TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </PivotItem>
+                            </Pivot>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Payment Methods -->
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="24">
+                    <StackPanel Spacing="16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Column="0" Text="Payment Methods" 
+                                       Style="{StaticResource SubtitleTextBlockStyle}"
+                                       FontWeight="SemiBold"/>
+                            
+                            <Button Grid.Column="1" x:Name="AddPaymentMethodButton"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    Click="AddPaymentMethod_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE710;" FontSize="14"/>
+                                    <TextBlock Text="Add Card"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                        
+                        <!-- Saved Cards List -->
+                        <ListView x:Name="PaymentMethodsListView" SelectionMode="None">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="12" ColumnSpacing="16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <!-- Card Icon -->
+                                        <Border Grid.Column="0" 
+                                                Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                                                CornerRadius="8" Width="48" Height="36">
+                                            <FontIcon Glyph="&#xE8C7;" FontSize="18" 
+                                                      HorizontalAlignment="Center" 
+                                                      VerticalAlignment="Center"/>
+                                        </Border>
+                                        
+                                        <!-- Card Info -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding ExpiryDisplay}" 
+                                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        </StackPanel>
+                                        
+                                        <!-- Set Default Button -->
+                                        <Button Grid.Column="2" Content="Set Default" 
+                                                Click="SetDefaultPaymentMethod_Click"
+                                                Tag="{Binding Id}"
+                                                VerticalAlignment="Center"/>
+                                        
+                                        <!-- Remove Button -->
+                                        <Button Grid.Column="3" 
+                                                Click="RemovePaymentMethod_Click"
+                                                Tag="{Binding Id}"
+                                                VerticalAlignment="Center">
+                                            <FontIcon Glyph="&#xE74D;" FontSize="14"/>
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                        
+                        <!-- Empty State -->
+                        <StackPanel x:Name="NoPaymentMethodsPanel" Visibility="Collapsed"
+                                    HorizontalAlignment="Center" Spacing="12" Padding="24">
+                            <FontIcon Glyph="&#xE8C7;" FontSize="32"
+                                      Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                      HorizontalAlignment="Center"/>
+                            <TextBlock Text="No payment methods saved" 
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="Add a card to get started" 
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Billing History -->
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="8">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Section Header -->
+                        <TextBlock Grid.Row="0" Text="Billing History" 
+                                   Style="{StaticResource SubtitleTextBlockStyle}"
+                                   FontWeight="SemiBold" Padding="24,24,24,0"/>
+                        
+                        <!-- Tab Selector -->
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Padding="24,16">
+                            <RadioButton x:Name="RechargeTab" Content="Wallet Recharge" 
+                                         GroupName="HistoryTabs" IsChecked="True" 
+                                         Checked="HistoryTab_Checked"/>
+                            <RadioButton x:Name="PCUsageTab" Content="Sense PC" 
+                                         GroupName="HistoryTabs" Checked="HistoryTab_Checked"/>
+                            <RadioButton x:Name="CloudUsageTab" Content="Sense Cloud" 
+                                         GroupName="HistoryTabs" Checked="HistoryTab_Checked"/>
+                        </StackPanel>
+                        
+                        <!-- Search and Date Range -->
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Padding="24,0,24,16" Spacing="16">
+                            <AutoSuggestBox x:Name="HistorySearchBox"
+                                            PlaceholderText="Search history..."
+                                            QueryIcon="Find"
+                                            Width="200"
+                                            TextChanged="HistorySearch_TextChanged"/>
+                            
+                            <!-- Date Range Picker -->
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <TextBlock Text="From:" VerticalAlignment="Center" 
+                                           Style="{StaticResource CaptionTextBlockStyle}"/>
+                                <CalendarDatePicker x:Name="HistoryFromDate" 
+                                                    PlaceholderText="Start date"
+                                                    DateChanged="HistoryDateRange_Changed"/>
+                            </StackPanel>
+                            
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <TextBlock Text="To:" VerticalAlignment="Center" 
+                                           Style="{StaticResource CaptionTextBlockStyle}"/>
+                                <CalendarDatePicker x:Name="HistoryToDate" 
+                                                    PlaceholderText="End date"
+                                                    DateChanged="HistoryDateRange_Changed"/>
+                            </StackPanel>
+                            
+                            <Button x:Name="ClearDateRangeButton" Content="Clear" 
+                                    Click="ClearDateRange_Click" ToolTipService.ToolTip="Clear date filter"/>
+                        </StackPanel>
+                        
+                        <!-- Column Headers -->
+                        <Grid Grid.Row="3">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <Grid Grid.Row="0" Padding="24,8" 
+                                  Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.5*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Column="0" Text="Type" 
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="1" Text="Date" 
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="2" Text="Amount" 
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="3" Text="Status" 
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           FontWeight="SemiBold"/>
+                            </Grid>
+                            
+                            <!-- History Content -->
+                            <Grid Grid.Row="1" MinHeight="200">
+                                <!-- Recharge History -->
+                                <StackPanel x:Name="RechargeHistoryPanel">
+                                    <ListView x:Name="RechargeListView" SelectionMode="None" Padding="8,0">
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Padding="16,12" ColumnSpacing="16">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="1.5*"/>
+                                                        <ColumnDefinition Width="2*"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    
+                                                    <TextBlock Grid.Column="0" Text="{Binding EventTypeDisplay}" 
+                                                               FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding FormattedDate}" 
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding AmountDisplay}" 
+                                                               FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    <Border Grid.Column="3" 
+                                                            Background="{ThemeResource SystemFillColorSuccessBackgroundBrush}"
+                                                            CornerRadius="4" Padding="8,4" 
+                                                            HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                        <TextBlock Text="Completed" FontSize="12"/>
+                                                    </Border>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                                    <TextBlock x:Name="NoRechargeText" Text="No recharge history found."
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               HorizontalAlignment="Center" Margin="0,24" Visibility="Collapsed"/>
+                                </StackPanel>
+                                
+                                <!-- PC Usage History -->
+                                <StackPanel x:Name="PCUsageHistoryPanel" Visibility="Collapsed">
+                                    <ListView x:Name="PCUsageListView" SelectionMode="None" Padding="8,0">
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Padding="16,12" ColumnSpacing="16">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="1.5*"/>
+                                                        <ColumnDefinition Width="2*"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    
+                                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                                        <TextBlock Text="{Binding SystemName}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                        <Border Background="{ThemeResource ControlFillColorTertiaryBrush}"
+                                                                CornerRadius="4" Padding="6,2">
+                                                            <TextBlock Text="{Binding BillingPlan}" FontSize="11"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="1" Text="{Binding FormattedDate}" 
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding AmountDisplay}" 
+                                                               FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    <Border Grid.Column="3" 
+                                                            Background="{ThemeResource ControlFillColorTertiaryBrush}"
+                                                            CornerRadius="4" Padding="8,4" 
+                                                            HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Status}" FontSize="12"/>
+                                                    </Border>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                                    <TextBlock x:Name="NoPCUsageText" Text="No PC usage history found."
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               HorizontalAlignment="Center" Margin="0,24" Visibility="Collapsed"/>
+                                </StackPanel>
+                                
+                                <!-- Cloud Usage History -->
+                                <StackPanel x:Name="CloudUsageHistoryPanel" Visibility="Collapsed">
+                                    <TextBlock x:Name="NoCloudUsageText" 
+                                               Text="Cloud storage billing coming soon."
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               HorizontalAlignment="Center" Margin="0,40"/>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Loading Overlay -->
+        <Grid x:Name="LoadingOverlay" Grid.RowSpan="2" Background="Transparent" Visibility="Collapsed">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16">
+                <ProgressRing IsActive="True" Width="48" Height="48"/>
+                <TextBlock Text="Loading billing data..." 
+                           Style="{StaticResource BodyTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>

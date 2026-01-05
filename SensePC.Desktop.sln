@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11312.210 d18.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SensePC.Desktop.WinUI", "SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj", "{79FB6CBA-FEE3-45B2-94ED-3288BB1CF1D4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+		test|Any CPU = test|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{79FB6CBA-FEE3-45B2-94ED-3288BB1CF1D4}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{79FB6CBA-FEE3-45B2-94ED-3288BB1CF1D4}.Debug|Any CPU.Build.0 = Debug|x64
+		{79FB6CBA-FEE3-45B2-94ED-3288BB1CF1D4}.Release|Any CPU.ActiveCfg = Release|x86
+		{79FB6CBA-FEE3-45B2-94ED-3288BB1CF1D4}.Release|Any CPU.Build.0 = Release|x86
+		{79FB6CBA-FEE3-45B2-94ED-3288BB1CF1D4}.test|Any CPU.ActiveCfg = test|x64
+		{79FB6CBA-FEE3-45B2-94ED-3288BB1CF1D4}.test|Any CPU.Build.0 = test|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,144 @@
+# Build outputs
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+bld/
+[Bb]uild/
+
+# Visual Studio files
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.csproj.user
+*.vscode/
+
+# NuGet packages
+*.nupkg
+**/packages/*
+!**/packages/build/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+
+# Windows SDK generated files
+Generated Files/
+GeneratedFiles/
+
+# Build results
+[Dd]ebugPublic/
+[Rr]eleases/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+[Ww][Ii][Nn]32/
+[Mm]arket[Pp]ackages/
+
+# MSBuild output
+*.log
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.Coverage
+*.coveragexml
+
+# NCrunch
+_NCrunch_*
+.*crunch*.local.xml
+nCrunchTemp_*
+
+# Benchmark results
+BenchmarkDotNet.Artifacts/
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Rider IDE
+.idea/
+*.sln.iml
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# StyleCop
+StyleCopReport.xml
+
+# Windows generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS generated files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux generated files
+*~
+
+# Secrets and local settings
+appsettings.local.json
+appsettings.*.local.json
+secrets.json
+*.pfx
+*.publishsettings
+local.settings.json
+
+# Azure Functions
+local.settings.json
+
+# Logs
+logs/
+*.log
+
+# Crash dumps
+*.dmp
+
+# JetBrains Rider
+.idea/
+
+# Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# PDB files without corresponding source (safety)
+*.pdb
+
+# App packaging
+*.appx
+*.appxbundle
+*.msix
+*.msixbundle
+*.appxupload
+*.msixupload
+
+# WinUI/UWP specific
+AppPackages/
+BundleArtifacts/
+Package.StoreAssociation.xml
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+
+# Other IDE and tool files
+.editorconfig.user
+*.code-workspace

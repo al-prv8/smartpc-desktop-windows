@@ -1,0 +1,437 @@
+<Page
+    x:Class="SensePC.Desktop.WinUI.Views.ProfilePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent">
+
+    <ScrollViewer>
+        <Grid Padding="32">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,24">
+                <TextBlock Text="Profile Settings" 
+                           Style="{StaticResource TitleTextBlockStyle}"
+                           Margin="0,0,0,4"/>
+                <TextBlock Text="Manage your account information and security settings" 
+                           Style="{StaticResource BodyTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </StackPanel>
+
+            <!-- Content Grid -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="320"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left Sidebar - Profile Card -->
+                <Border Grid.Column="0" 
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="24"
+                        Margin="0,0,16,0"
+                        VerticalAlignment="Top">
+                    
+                    <StackPanel HorizontalAlignment="Center" Spacing="16">
+                        <!-- Avatar -->
+                        <Grid Width="120" Height="120" HorizontalAlignment="Center">
+                            <!-- Avatar Image (shown when user has profile picture) -->
+                            <Ellipse x:Name="AvatarImageClip" Fill="{ThemeResource AccentFillColorDefaultBrush}"/>
+                            <Ellipse x:Name="AvatarImageEllipse" Visibility="Collapsed">
+                                <Ellipse.Fill>
+                                    <ImageBrush x:Name="AvatarImageBrush" Stretch="UniformToFill"/>
+                                </Ellipse.Fill>
+                            </Ellipse>
+                            <!-- Initials fallback -->
+                            <TextBlock x:Name="AvatarInitials"
+                                       Text="JD"
+                                       FontSize="42"
+                                       FontWeight="Bold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                            <!-- Camera Icon Badge -->
+                            <Border Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                    Width="32" Height="32"
+                                    CornerRadius="16"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Bottom"
+                                    Margin="0,0,4,4">
+                                <FontIcon Glyph="&#xE722;" FontSize="14" Foreground="White"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+
+                        <!-- Avatar Actions -->
+                        <StackPanel Spacing="4" HorizontalAlignment="Center">
+                            <TextBlock Text="JPG, PNG, or GIF. Max 2MB."
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       HorizontalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center" Margin="0,8,0,0">
+                                <Button x:Name="UploadAvatarButton"
+                                        Style="{StaticResource AccentButtonStyle}"
+                                        Click="UploadAvatarButton_Click"
+                                        Padding="16,8">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE898;" FontSize="12"/>
+                                        <TextBlock x:Name="UploadButtonText" Text="Upload"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="RemoveAvatarButton"
+                                        Click="RemoveAvatarButton_Click"
+                                        Padding="16,8"
+                                        Visibility="Collapsed">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE74D;" FontSize="12"/>
+                                        <TextBlock x:Name="RemoveButtonText" Text="Remove"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- User Info -->
+                        <StackPanel HorizontalAlignment="Center" Spacing="4">
+                            <TextBlock x:Name="UserNameDisplay"
+                                       Text="John Doe"
+                                       Style="{StaticResource SubtitleTextBlockStyle}"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="UserEmailDisplay"
+                                       Text="user@example.com"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       HorizontalAlignment="Center"/>
+                            <Border Background="{ThemeResource AccentFillColorTertiaryBrush}"
+                                    CornerRadius="12"
+                                    Padding="12,4"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,8,0,0">
+                                <TextBlock x:Name="UserRoleBadge"
+                                           Text="Member"
+                                           FontSize="12"
+                                           Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Quick Actions -->
+                        <StackPanel Margin="0,16,0,0" Spacing="8">
+                            <Button x:Name="SignOutButton"
+                                    HorizontalAlignment="Stretch"
+                                    Click="SignOutButton_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xF3B1;" FontSize="14"/>
+                                    <TextBlock Text="Sign Out"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Right Content - Tabs -->
+                <Border Grid.Column="1" 
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                    
+                    <Pivot x:Name="ProfilePivot">
+                        <!-- Account Tab -->
+                        <PivotItem>
+                            <PivotItem.Header>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE77B;" FontSize="16"/>
+                                    <TextBlock Text="Account"/>
+                                </StackPanel>
+                            </PivotItem.Header>
+                            
+                            <StackPanel Padding="24" Spacing="24" MaxWidth="500">
+                                <!-- Personal Information -->
+                                <StackPanel Spacing="16">
+                                    <TextBlock Text="Personal Information" 
+                                               Style="{StaticResource SubtitleTextBlockStyle}"/>
+                                    
+                                    <!-- Full Name -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Full Name" 
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        <TextBox x:Name="FullNameBox"
+                                                 PlaceholderText="Enter your full name"/>
+                                    </StackPanel>
+
+                                    <!-- Email -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Email Address" 
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        <TextBox x:Name="EmailBox"
+                                                 PlaceholderText="Email address"
+                                                 IsReadOnly="True"/>
+                                    </StackPanel>
+
+                                    <!-- Country -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Country" 
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        <TextBox x:Name="CountryBox"
+                                                 PlaceholderText="Enter your country"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Divider -->
+                                <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}"/>
+
+                                <!-- Organization -->
+                                <StackPanel Spacing="16">
+                                    <TextBlock Text="Organization" 
+                                               Style="{StaticResource SubtitleTextBlockStyle}"/>
+                                    
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Organization Name" 
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        <TextBox x:Name="OrganizationBox"
+                                                 PlaceholderText="Enter organization name"/>
+                                    </StackPanel>
+
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Your Role" 
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        <TextBox x:Name="RoleBox"
+                                                 PlaceholderText="Role"
+                                                 IsReadOnly="True"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Save Button -->
+                                <Button x:Name="SaveProfileButton"
+                                        Style="{StaticResource AccentButtonStyle}"
+                                        HorizontalAlignment="Left"
+                                        Padding="24,12"
+                                        Click="SaveProfileButton_Click">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon Glyph="&#xE74E;" FontSize="14"/>
+                                        <TextBlock Text="Save Changes"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </PivotItem>
+
+                        <!-- Security Tab -->
+                        <PivotItem>
+                            <PivotItem.Header>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE72E;" FontSize="16"/>
+                                    <TextBlock Text="Security"/>
+                                </StackPanel>
+                            </PivotItem.Header>
+                            
+                            <StackPanel Padding="24" Spacing="24" MaxWidth="500">
+                                <!-- Change Password Section -->
+                                <StackPanel Spacing="16">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Change Password" 
+                                                   Style="{StaticResource SubtitleTextBlockStyle}"/>
+                                        <TextBlock Text="Update your password to keep your account secure"
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Current Password" 
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        <PasswordBox x:Name="CurrentPasswordBox"
+                                                     PlaceholderText="Enter current password"/>
+                                    </StackPanel>
+
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="New Password" 
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        <PasswordBox x:Name="NewPasswordBox"
+                                                     PlaceholderText="Enter new password"/>
+                                    </StackPanel>
+
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Confirm New Password" 
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        <PasswordBox x:Name="ConfirmPasswordBox"
+                                                     PlaceholderText="Confirm new password"/>
+                                    </StackPanel>
+
+                                    <Button x:Name="ChangePasswordButton"
+                                            Style="{StaticResource AccentButtonStyle}"
+                                            HorizontalAlignment="Left"
+                                            Padding="24,12"
+                                            Click="ChangePasswordButton_Click">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon Glyph="&#xE8D7;" FontSize="14"/>
+                                            <TextBlock Text="Update Password"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+
+                                <!-- Divider -->
+                                <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}"/>
+
+                                <!-- Password Requirements -->
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="Password Requirements" 
+                                               Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="• At least 8 characters long"
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        <TextBlock Text="• Contains uppercase and lowercase letters"
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        <TextBlock Text="• Contains at least one number"
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        <TextBlock Text="• Contains at least one special character"
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Divider -->
+                                <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}"/>
+
+                                <!-- Multi-Factor Authentication Section -->
+                                <StackPanel Spacing="16">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Multi-Factor Authentication" 
+                                                   Style="{StaticResource SubtitleTextBlockStyle}"/>
+                                        <TextBlock Text="Add an extra layer of security to your account"
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    </StackPanel>
+                                    
+                                    <!-- Authenticator App -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="Authenticator App" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="TotpStatusText" Text="Not configured"
+                                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        </StackPanel>
+                                        
+                                        <Button x:Name="TotpToggleButton" Grid.Column="1" 
+                                                Content="Setup" Click="TotpToggleButton_Click"/>
+                                    </Grid>
+                                    
+                                    <!-- Email Authentication -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="Email Authentication" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="EmailMfaStatusText" Text="Not configured"
+                                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        </StackPanel>
+                                        
+                                        <Button x:Name="EmailMfaToggleButton" Grid.Column="1" 
+                                                Content="Setup" Click="EmailMfaToggleButton_Click"/>
+                                    </Grid>
+                                </StackPanel>
+
+                                <!-- Divider -->
+                                <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}"/>
+
+                                <!-- Connected Devices Section -->
+                                <StackPanel Spacing="16">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Connected Devices" 
+                                                   Style="{StaticResource SubtitleTextBlockStyle}"/>
+                                        <TextBlock Text="Devices where you're currently signed in"
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    </StackPanel>
+                                    
+                                    <!-- Devices List -->
+                                    <ItemsControl x:Name="DevicesItemsControl">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                                                        CornerRadius="4" Padding="12" Margin="0,0,0,8">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        
+                                                        <StackPanel Spacing="4">
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/>
+                                                                <Border Background="{ThemeResource SystemFillColorSuccessBrush}"
+                                                                        CornerRadius="4" Padding="6,2"
+                                                                        Visibility="{Binding IsCurrentSession, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                                    <TextBlock Text="THIS DEVICE" FontSize="10" FontWeight="Bold" Foreground="White"/>
+                                                                </Border>
+                                                            </StackPanel>
+                                                            <TextBlock Text="{Binding LastActivityFormatted}"
+                                                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    
+                                    <!-- No devices message -->
+                                    <TextBlock x:Name="NoDevicesText" Text="No connected devices found."
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               Visibility="Collapsed"/>
+                                    
+                                    <!-- Sign Out All Button -->
+                                    <Button x:Name="SignOutAllButton" Click="SignOutAllButton_Click">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon Glyph="&#xF3B1;" FontSize="14"/>
+                                            <TextBlock Text="Sign Out from All Devices"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </StackPanel>
+                        </PivotItem>
+                    </Pivot>
+                </Border>
+            </Grid>
+
+            <!-- Loading Overlay -->
+            <Grid x:Name="LoadingOverlay" 
+                  Grid.RowSpan="2"
+                  Background="Transparent"
+                  Visibility="Collapsed">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+                    <ProgressRing IsActive="True" Width="40" Height="40"/>
+                    <TextBlock Text="Loading..." 
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</Page>

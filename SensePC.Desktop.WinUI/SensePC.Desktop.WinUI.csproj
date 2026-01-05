@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>SensePC.Desktop.WinUI</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x86;x64;ARM64</Platforms>
+    <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+    <UseWinUI>true</UseWinUI>
+    <!-- Unpackaged deployment -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Windows SDK workaround -->
+    <WindowsSdkPackageVersion>10.0.19041.38</WindowsSdkPackageVersion>
+    <!-- Required for WinRT source generator -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Deploy Windows App SDK with the app (self-contained) -->
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.231008000" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+    <PackageReference Include="Serilog" Version="3.1.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="AWSSDK.CognitoIdentityProvider" Version="3.7.305.1" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="MainWindow.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Views\LoginPage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Views\DashboardPage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Views\SensePCPage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Views\SensePCDetailsPage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Views\UsersPage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Views\TutorialsPage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Views\ProfilePage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Views\NotificationsPage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Views\BillingPage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Views\SupportPage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Views\TicketConversationPage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Controls\PCInstanceCard.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\SensePC.Desktop\SensePC.Desktop.csproj" Condition="false" /> 
+    <!-- Note: We might reuse code by linking files instead of project reference to avoid WPF/WinUI conflict -->
+  </ItemGroup>
+</Project>

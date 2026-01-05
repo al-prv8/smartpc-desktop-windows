@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="SensePC.Desktop.WinUI.Views.SensePCDetailsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:SensePC.Desktop.WinUI.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Loaded="Page_Loaded">
+
+    <Grid>
+        <ScrollViewer>
+            <StackPanel Spacing="24" Padding="32">
+                
+                <!-- Header -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                        <Button Click="BackButton_Click" ToolTipService.ToolTip="Back">
+                            <FontIcon Glyph="&#xE72B;" FontSize="16"/>
+                        </Button>
+                        <StackPanel Spacing="4">
+                            <TextBlock x:Name="PcNameText" Text="PC Details" Style="{StaticResource SubtitleTextBlockStyle}" FontWeight="SemiBold"/>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Border x:Name="StatusBadge" CornerRadius="4" Padding="8,4">
+                                    <TextBlock x:Name="StatusText" Text="Stopped" FontSize="12" FontWeight="SemiBold"/>
+                                </Border>
+                                <TextBlock x:Name="InstanceIdText" Text="i-..." FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Action Buttons -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Button x:Name="ConnectBtn" Style="{StaticResource AccentButtonStyle}" Click="ConnectBtn_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE8A7;" FontSize="14"/>
+                                <TextBlock Text="Connect"/>
+                            </StackPanel>
+                        </Button>
+                        
+                        <Button x:Name="StartStopBtn" Click="StartStopBtn_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon x:Name="StartStopIcon" Glyph="&#xE768;" FontSize="14"/>
+                                <TextBlock x:Name="StartStopText" Text="Start"/>
+                            </StackPanel>
+                        </Button>
+                        
+                        <Button x:Name="RebootBtn" Click="RebootBtn_Click" ToolTipService.ToolTip="Reboot">
+                            <FontIcon Glyph="&#xE72C;" FontSize="14"/>
+                        </Button>
+                        
+                        <Button Click="MoreOptionsBtn_Click" ToolTipService.ToolTip="More options">
+                            <FontIcon Glyph="&#xE712;" FontSize="14"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Main Content Grid -->
+                <Grid ColumnSpacing="24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Computer Metrics Card -->
+                    <Border Grid.Row="0" Grid.Column="0"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1" CornerRadius="8" Padding="20">
+                        <StackPanel Spacing="16">
+                            <TextBlock Text="Computer Metrics" FontWeight="SemiBold" FontSize="16"/>
+                            
+                            <Grid ColumnSpacing="24" RowSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                
+                                <!-- CPU -->
+                                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="CPU" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                                    <TextBlock x:Name="CpuText" Text="0.00%" FontSize="15" FontWeight="Medium"/>
+                                </StackPanel>
+                                
+                                <!-- Memory -->
+                                <StackPanel Grid.Row="0" Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="Memory" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                                    <TextBlock x:Name="MemoryText" Text="0.00%" FontSize="15" FontWeight="Medium"/>
+                                </StackPanel>
+                                
+                                <!-- Region -->
+                                <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Region" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                                    <TextBlock x:Name="RegionText" Text="—" FontSize="15" FontWeight="Medium"/>
+                                </StackPanel>
+                                
+                                <!-- Uptime -->
+                                <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="Uptime" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                                    <TextBlock x:Name="UptimeText" Text="N/A" FontSize="15" FontWeight="Medium"/>
+                                </StackPanel>
+                                
+                                <!-- Cost -->
+                                <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Spacing="4">
+                                    <TextBlock Text="Cost" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                                    <TextBlock x:Name="CostText" Text="$0.00 this month" FontSize="15" FontWeight="Medium" Foreground="#10B981"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Specifications Card -->
+                    <Border Grid.Row="0" Grid.Column="1"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1" CornerRadius="8" Padding="20">
+                        <StackPanel Spacing="16">
+                            <TextBlock Text="Specifications" FontWeight="SemiBold" FontSize="16"/>
+                            
+                            <Grid ColumnSpacing="24" RowSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                
+                                <!-- CPU -->
+                                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="CPU" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                                    <TextBlock x:Name="CpuCoresText" Text="— Core" FontSize="15" FontWeight="Medium"/>
+                                </StackPanel>
+                                
+                                <!-- Memory -->
+                                <StackPanel Grid.Row="0" Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="Memory" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                                    <TextBlock x:Name="MemorySpecText" Text="—" FontSize="15" FontWeight="Medium"/>
+                                </StackPanel>
+                                
+                                <!-- SSD -->
+                                <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="SSD" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                                    <TextBlock x:Name="StorageText" Text="—" FontSize="15" FontWeight="Medium"/>
+                                </StackPanel>
+                                
+                                <!-- GPU -->
+                                <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="GPU" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                                    <TextBlock x:Name="GpuText" Text="None" FontSize="15" FontWeight="Medium"/>
+                                </StackPanel>
+                                
+                                <!-- OS -->
+                                <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Spacing="4">
+                                    <TextBlock Text="OS" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                                    <TextBlock x:Name="OsText" Text="—" FontSize="15" FontWeight="Medium"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Assigned User Card -->
+                    <Border Grid.Row="1" Grid.Column="0" Margin="0,24,0,0"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1" CornerRadius="8" Padding="20">
+                        <StackPanel Spacing="16">
+                            <TextBlock Text="Assigned User" FontWeight="SemiBold" FontSize="16"/>
+                            
+                            <TextBlock x:Name="AssignedUserText" Text="No user assigned to this PC." 
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            
+                            <Button x:Name="AssignUserBtn" Click="AssignUser_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE77B;" FontSize="14"/>
+                                    <TextBlock Text="Assign user"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Current Billing Plan Card -->
+                    <Border Grid.Row="1" Grid.Column="1" Margin="0,24,0,0"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1" CornerRadius="8" Padding="20">
+                        <StackPanel Spacing="16">
+                            <TextBlock Text="Current Billing Plan:" FontWeight="SemiBold" FontSize="16"/>
+                            
+                            <StackPanel Spacing="8">
+                                <TextBlock x:Name="BillingPlanText" Text="Hourly" FontSize="18" FontWeight="SemiBold" Foreground="#5F9FFF"/>
+                                <TextBlock x:Name="BillingPlanDescription" TextWrapping="Wrap"
+                                           Text="Unlimited usage — pay per hour while running. Great for quick tasks, testing, and flexible start/stop."
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                            </StackPanel>
+                            
+                            <Button Click="ManagePlan_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE8A1;" FontSize="14"/>
+                                    <TextBlock Text="Manage Plan"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Additional Settings Expander -->
+                <Expander Header="Advanced Settings" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                    <StackPanel Spacing="24" Padding="8">
+                        <!-- Schedule -->
+                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1" CornerRadius="8" Padding="20">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Auto Schedule" FontWeight="SemiBold"/>
+                                    <TextBlock x:Name="ScheduleText" Text="Not configured" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Click="ConfigureSchedule_Click">
+                                    <TextBlock Text="Configure"/>
+                                </Button>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Idle Timeout -->
+                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1" CornerRadius="8" Padding="20">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Idle Timeout" FontWeight="SemiBold"/>
+                                    <TextBlock x:Name="IdleText" Text="30 minutes" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Click="ConfigureIdle_Click">
+                                    <TextBlock Text="Configure"/>
+                                </Button>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Resize -->
+                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1" CornerRadius="8" Padding="20">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Resize PC" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Change CPU cores and memory (requires PC to be stopped)" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                                </StackPanel>
+                                <Button x:Name="ResizeBtn" Grid.Column="1" Click="ConfigureResize_Click">
+                                    <TextBlock Text="Resize"/>
+                                </Button>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Delete -->
+                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="#30FF4444"
+                                BorderThickness="1" CornerRadius="8" Padding="20">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Delete PC" FontWeight="SemiBold" Foreground="#FF4444"/>
+                                    <TextBlock Text="Permanently delete this PC and all its data" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Click="DeletePC_Click" Background="#20FF4444">
+                                    <TextBlock Text="Delete" Foreground="#FF4444"/>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Expander>
+            </StackPanel>
+        </ScrollViewer>
+        
+        <!-- Loading Overlay -->
+        <Grid x:Name="LoadingOverlay" Visibility="Collapsed">
+            <ProgressRing IsActive="True" Width="40" Height="40"/>
+        </Grid>
+    </Grid>
+</Page>

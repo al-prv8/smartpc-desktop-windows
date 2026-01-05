@@ -1,0 +1,13 @@
+﻿  Determining projects to restore...
+  All projects are up-to-date for restore.
+C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\Services\SensePCApiService.cs(2091,5): error CS1519: Invalid token '}' in class, record, struct, or interface member declaration [C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj]
+C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\buildTransitive\Microsoft.UI.Xaml.Markup.Compiler.interop.targets(841,9): error MSB3073: The command ""C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\buildTransitive\..\tools\net5.0\..\net472\XamlCompiler.exe" "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\\input.json" "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\\output.json"" exited with code 1. [C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj]
+
+Build FAILED.
+
+C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\Services\SensePCApiService.cs(2091,5): error CS1519: Invalid token '}' in class, record, struct, or interface member declaration [C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj]
+C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\buildTransitive\Microsoft.UI.Xaml.Markup.Compiler.interop.targets(841,9): error MSB3073: The command ""C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\buildTransitive\..\tools\net5.0\..\net472\XamlCompiler.exe" "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\\input.json" "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\\output.json"" exited with code 1. [C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj]
+    0 Warning(s)
+    2 Error(s)
+
+Time Elapsed 00:00:03.43

@@ -1,0 +1,100 @@
+﻿   1:7>Target "_BlockWinMDsOnUnsupportedTFMs" in file "C:\Program Files\dotnet\sdk\8.0.416\Sdks\Microsoft.NET.Sdk\targets\Microsoft.NET.Sdk.targets" from project "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj" (target "CoreBuild" depends on it):
+       Using "CheckForUnsupportedWinMDReferences" task from assembly "C:\Program Files\dotnet\sdk\8.0.416\Sdks\Microsoft.NET.Sdk\targets\..\tools\net8.0\Microsoft.NET.Build.Tasks.dll".
+       Task "CheckForUnsupportedWinMDReferences"
+       Done executing task "CheckForUnsupportedWinMDReferences".
+       Task "NETSdkError" skipped, due to false condition; ('$(OutputType)' == 'winmdobj') was evaluated as ('WinExe' == 'winmdobj').
+   1:7>Done building target "_BlockWinMDsOnUnsupportedTFMs" in project "SensePC.Desktop.WinUI.csproj".
+       Target "ResolveReferences" skipped. Previously built successfully.
+       Target "ResolvePackageDependenciesForBuild" skipped. Previously built successfully.
+       Target "_HandlePackageFileConflicts" skipped. Previously built successfully.
+       Target "ResolveKeySource" skipped, due to false condition; ($(SignManifests) == 'true' or $(SignAssembly) == 'true') was evaluated as ( == 'true' or false == 'true').
+   1:7>Target "GenerateTargetPlatformDefineConstants" in file "C:\Program Files\dotnet\sdk\8.0.416\Sdks\Microsoft.NET.Sdk\targets\Microsoft.NET.Sdk.BeforeCommon.targets" from project "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj" (target "AddImplicitDefineConstants" depends on it):
+   1:7>Done building target "GenerateTargetPlatformDefineConstants" in project "SensePC.Desktop.WinUI.csproj".
+   1:7>Target "GenerateNETCompatibleDefineConstants" in file "C:\Program Files\dotnet\sdk\8.0.416\Sdks\Microsoft.NET.Sdk\targets\Microsoft.NET.Sdk.BeforeCommon.targets" from project "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj" (target "AddImplicitDefineConstants" depends on it):
+   1:7>Done building target "GenerateNETCompatibleDefineConstants" in project "SensePC.Desktop.WinUI.csproj".
+   1:7>Target "GeneratePlatformCompatibleDefineConstants" in file "C:\Program Files\dotnet\sdk\8.0.416\Sdks\Microsoft.NET.Sdk\targets\Microsoft.NET.Sdk.BeforeCommon.targets" from project "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj" (target "AddImplicitDefineConstants" depends on it):
+   1:7>Done building target "GeneratePlatformCompatibleDefineConstants" in project "SensePC.Desktop.WinUI.csproj".
+       Target "_DisableDiagnosticTracing" skipped, due to false condition; ('$(DisableDiagnosticTracing)' == 'true') was evaluated as ('' == 'true').
+   1:7>Target "AddImplicitDefineConstants" in file "C:\Program Files\dotnet\sdk\8.0.416\Sdks\Microsoft.NET.Sdk\targets\Microsoft.NET.Sdk.BeforeCommon.targets" from project "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj" (target "PrepareResources" depends on it):
+   1:7>Done building target "AddImplicitDefineConstants" in project "SensePC.Desktop.WinUI.csproj".
+   1:7>Target "GetVCInstallPath" in file "C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\buildTransitive\Microsoft.UI.Xaml.Markup.Compiler.interop.targets" from project "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj" (target "MarkupCompilePass1" depends on it):
+       Task "GetLatestMSVCVersion" skipped, due to false condition; ('$(VCToolsInstallDir)' == '' and '$(VsInstallRoot)' != '') was evaluated as ('' == '' and '' != '').
+   1:7>Done building target "GetVCInstallPath" in project "SensePC.Desktop.WinUI.csproj".
+       Target "GetXamlCppIncludeDirectories" skipped, due to false condition; ('$(ManagedAssembly)'=='false' and '$(XamlCppIncludeDirectories)' == '') was evaluated as (''=='false' and '' == '').
+       Target "_ValidatePresenceOfAppxManifestItems" skipped, due to false condition; ('@(AppxManifest)@(CustomAppxManifest)'!='') was evaluated as (''!='').
+   1:7>Target "CalculateAppxGenerateProjectPriEnabled" in file "C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\buildTransitive\Microsoft.Build.Msix.Pri.targets" from project "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj" (target "GetPriIndexName" depends on it):
+   1:7>Done building target "CalculateAppxGenerateProjectPriEnabled" in project "SensePC.Desktop.WinUI.csproj".
+   1:7>Target "GetPriIndexName" in file "C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\buildTransitive\Microsoft.UI.Xaml.Markup.Compiler.interop.targets" from project "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj" (target "MarkupCompilePass1" depends on it):
+   1:7>Done building target "GetPriIndexName" in project "SensePC.Desktop.WinUI.csproj".
+   1:7>Target "_UpdatePriIndex" in file "C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\buildTransitive\Microsoft.Build.Msix.Common.props" from project "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj" (target "MarkupCompilePass1" depends on it):
+   1:7>Done building target "_UpdatePriIndex" in project "SensePC.Desktop.WinUI.csproj".
+   1:7>Target "GetPrecompiledHeaderFile" in file "C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\buildTransitive\Microsoft.UI.Xaml.Markup.Compiler.interop.targets" from project "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj" (target "MarkupCompilePass1" depends on it):
+   1:7>Done building target "GetPrecompiledHeaderFile" in project "SensePC.Desktop.WinUI.csproj".
+   1:7>Target "_OverrideGetPriIndexName" in file "C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\buildTransitive\Microsoft.WindowsAppSDK.SelfContained.targets" from project "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj" (target "MarkupCompilePass1" depends on it):
+   1:7>Done building target "_OverrideGetPriIndexName" in project "SensePC.Desktop.WinUI.csproj".
+   1:7>Target "MarkupCompilePass1" in file "C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\buildTransitive\Microsoft.UI.Xaml.Markup.Compiler.interop.targets" from project "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj" (target "PrepareResources" depends on it):
+       Task "Error" skipped, due to false condition; ( '$(MSBuildRuntimeType)' != 'Core' And '$(UseXamlCompilerExecutable)' == 'true') was evaluated as ( 'Core' != 'Core' And 'true' == 'true').
+       Task "MakeDir"
+       Done executing task "MakeDir".
+       Task "CompileXaml" skipped, due to false condition; ('$(UseXamlCompilerExecutable)' != 'true') was evaluated as ('true' != 'true').
+       Assembly loaded during TaskRun: Microsoft.UI.Xaml.Markup.Compiler.IO, Version=3.0.0.2310, Culture=neutral, PublicKeyToken=de31ebe4ad15742b (location: C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\tools\net5.0\Microsoft.UI.Xaml.Markup.Compiler.IO.dll, MVID: 8ef05aaa-f8ae-4cf4-919c-e7f996dd9e59, AssemblyLoadContext: MSBuild plugin C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\tools\net5.0\Microsoft.UI.Xaml.Markup.Compiler.IO.dll)
+       Assembly loaded during TaskRun: Microsoft.UI.Xaml.Markup.Compiler.MSBuildInterop, Version=3.0.0.2310, Culture=neutral, PublicKeyToken=de31ebe4ad15742b (location: C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\tools\net5.0\Microsoft.UI.Xaml.Markup.Compiler.MSBuildInterop.dll, MVID: 518dc54b-6971-4299-860b-ca4c99d46ca2, AssemblyLoadContext: MSBuild plugin C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\tools\net5.0\Microsoft.UI.Xaml.Markup.Compiler.IO.dll)
+       Using "InputSerializer" task from assembly "C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\buildTransitive\..\tools\net5.0\Microsoft.UI.Xaml.Markup.Compiler.IO.dll".
+       Task "InputSerializer"
+         Assembly loaded during TaskRun (Microsoft.UI.Xaml.Markup.Compiler.IO.InputSerializer): System.Text.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51 (location: C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\tools\net5.0\System.Text.Json.dll, MVID: 086d512a-2bc5-4265-aa92-dae69baacd13, AssemblyLoadContext: MSBuild plugin C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\tools\net5.0\Microsoft.UI.Xaml.Markup.Compiler.IO.dll)
+         Assembly loaded during TaskRun (Microsoft.UI.Xaml.Markup.Compiler.IO.InputSerializer): Microsoft.Bcl.AsyncInterfaces, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51 (location: C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\tools\net5.0\Microsoft.Bcl.AsyncInterfaces.dll, MVID: b2422c07-7a9d-4584-af3f-f1d7011f6a5a, AssemblyLoadContext: MSBuild plugin C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\tools\net5.0\Microsoft.UI.Xaml.Markup.Compiler.IO.dll)
+         Assembly loaded during TaskRun (Microsoft.UI.Xaml.Markup.Compiler.IO.InputSerializer): System.Text.Encodings.Web, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51 (location: C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\tools\net5.0\System.Text.Encodings.Web.dll, MVID: c7521d8a-f0e7-4fc7-b157-923bd9b7a91e, AssemblyLoadContext: MSBuild plugin C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\tools\net5.0\Microsoft.UI.Xaml.Markup.Compiler.IO.dll)
+         Assembly loaded during TaskRun (Microsoft.UI.Xaml.Markup.Compiler.IO.InputSerializer): mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089 (location: C:\Program Files\dotnet\shared\Microsoft.NETCore.App\8.0.22\mscorlib.dll, MVID: b914bc2e-9687-48b3-9f9b-fee4b2822ca5, AssemblyLoadContext: Default)
+         Assembly loaded during TaskRun (Microsoft.UI.Xaml.Markup.Compiler.IO.InputSerializer): System.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089 (location: C:\Program Files\dotnet\shared\Microsoft.NETCore.App\8.0.22\System.Core.dll, MVID: d8da9f54-bcc4-4f53-ab4a-d277d08f9344, AssemblyLoadContext: Default)
+         Assembly loaded during TaskRun (Microsoft.UI.Xaml.Markup.Compiler.IO.InputSerializer): System.Threading.Tasks.Extensions, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51 (location: C:\Program Files\dotnet\shared\Microsoft.NETCore.App\8.0.22\System.Threading.Tasks.Extensions.dll, MVID: 03c998d1-8f50-40eb-89de-ecf9ee272b41, AssemblyLoadContext: Default)
+         Assembly loaded during TaskRun (Microsoft.UI.Xaml.Markup.Compiler.IO.InputSerializer): System.Buffers, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51 (location: C:\Program Files\dotnet\shared\Microsoft.NETCore.App\8.0.22\System.Buffers.dll, MVID: f06f5d32-c4c9-4f2b-9a74-fdfd8349efe9, AssemblyLoadContext: Default)
+       Done executing task "InputSerializer".
+       Using "Exec" task from assembly "Microsoft.Build.Tasks.Core, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a".
+       Task "Exec"
+         "C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\buildTransitive\..\tools\net5.0\..\net472\XamlCompiler.exe" "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\\input.json" "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\\output.json"
+   1:7>C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\buildTransitive\Microsoft.UI.Xaml.Markup.Compiler.interop.targets(590,9): error MSB3073: The command ""C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\buildTransitive\..\tools\net5.0\..\net472\XamlCompiler.exe" "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\\input.json" "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\\output.json"" exited with code 1. [C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj]
+       Done executing task "Exec" -- FAILED.
+   1:7>Done building target "MarkupCompilePass1" in project "SensePC.Desktop.WinUI.csproj" -- FAILED.
+   1:7>Target "_CheckForCompileOutputs" in file "C:\Program Files\dotnet\sdk\8.0.416\Microsoft.Common.CurrentVersion.targets" from project "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj" (target "_CleanGetCurrentAndPriorFileWrites" depends on it):
+   1:7>Done building target "_CheckForCompileOutputs" in project "SensePC.Desktop.WinUI.csproj".
+       Target "_SGenCheckForOutputs" skipped, due to false condition; ('$(_SGenGenerateSerializationAssembliesConfig)' == 'On' or ('@(WebReferenceUrl)'!='' and '$(_SGenGenerateSerializationAssembliesConfig)' == 'Auto')) was evaluated as ('Off' == 'On' or (''!='' and 'Off' == 'Auto')).
+   1:7>Target "_CleanGetCurrentAndPriorFileWrites" in file "C:\Program Files\dotnet\sdk\8.0.416\Microsoft.Common.CurrentVersion.targets" from project "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj" (target "_CleanRecordFileWrites" depends on it):
+       Using "ReadLinesFromFile" task from assembly "Microsoft.Build.Tasks.Core, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a".
+       Task "ReadLinesFromFile"
+       Done executing task "ReadLinesFromFile".
+       Task "ConvertToAbsolutePath"
+       Done executing task "ConvertToAbsolutePath".
+       Using "FindUnderPath" task from assembly "Microsoft.Build.Tasks.Core, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a".
+       Task "FindUnderPath"
+         Comparison path is "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI".
+       Done executing task "FindUnderPath".
+       Task "FindUnderPath"
+         Comparison path is "bin\x64\Debug\net8.0-windows10.0.19041.0\win-x64\".
+       Done executing task "FindUnderPath".
+       Task "FindUnderPath"
+         Comparison path is "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\".
+       Done executing task "FindUnderPath".
+       Task "RemoveDuplicates"
+       Done executing task "RemoveDuplicates".
+   1:7>Done building target "_CleanGetCurrentAndPriorFileWrites" in project "SensePC.Desktop.WinUI.csproj".
+   1:7>Target "_CleanRecordFileWrites" in file "C:\Program Files\dotnet\sdk\8.0.416\Microsoft.Common.CurrentVersion.targets" from project "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj" (target "CoreBuild" depends on it):
+       Task "RemoveDuplicates"
+       Done executing task "RemoveDuplicates".
+       Task "MakeDir"
+       Done executing task "MakeDir".
+       Task "WriteLinesToFile"
+         Skipping write to file "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\SensePC.Desktop.WinUI.csproj.FileListAbsolute.txt" because content would not change.
+       Done executing task "WriteLinesToFile".
+   1:7>Done building target "_CleanRecordFileWrites" in project "SensePC.Desktop.WinUI.csproj".
+   1:7>Done Building Project "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj" (default targets) -- FAILED.
+
+Build FAILED.
+
+       "C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj" (default target) (1:7) ->
+       (MarkupCompilePass1 target) -> 
+         C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\buildTransitive\Microsoft.UI.Xaml.Markup.Compiler.interop.targets(590,9): error MSB3073: The command ""C:\Users\almamun\.nuget\packages\microsoft.windowsappsdk\1.4.231008000\buildTransitive\..\tools\net5.0\..\net472\XamlCompiler.exe" "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\\input.json" "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\\output.json"" exited with code 1. [C:\Users\almamun\Documents\GitHub\New folder\SensePC.Desktop\SensePC.Desktop.WinUI\SensePC.Desktop.WinUI.csproj]
+
+    0 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:03.96
