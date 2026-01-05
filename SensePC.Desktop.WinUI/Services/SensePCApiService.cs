@@ -839,6 +839,56 @@ namespace SensePC.Desktop.WinUI.Services
         }
 
         /// <summary>
+        /// Get current PC configuration for resize (loads existing settings)
+        /// </summary>
+        public async Task<ResizeConfigData?> GetResizeConfigAsync(string computerName)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                    return null;
+
+                var payload = new
+                {
+                    userId = userId,
+                    computerName = computerName
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Post, ApiConfig.ResizeUrl)
+                {
+                    Content = content
+                };
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+
+                var response = await _httpClient.SendAsync(request);
+                
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+                System.Diagnostics.Debug.WriteLine($"GetResizeConfig response: {responseContent}");
+
+                var result = JsonSerializer.Deserialize<ResizeConfigResponse>(responseContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                
+                return result?.Data;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetResizeConfig error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Increase storage volume for a PC
         /// Only works when PC is running and on Hourly plan
         /// </summary>
@@ -2430,6 +2480,39 @@ namespace SensePC.Desktop.WinUI.Services
     {
         [System.Text.Json.Serialization.JsonPropertyName("data")]
         public ScheduleData? Data { get; set; }
+    }
+
+    /// <summary>
+    /// Resize configuration data from the backend
+    /// </summary>
+    public class ResizeConfigData
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("computerName")]
+        public string? ComputerName { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("configId")]
+        public string? ConfigId { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("operatingSystem")]
+        public string? OperatingSystem { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("location")]
+        public string? Location { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("billingPlan")]
+        public string? BillingPlan { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("storage")]
+        public string? Storage { get; set; }
+    }
+
+    /// <summary>
+    /// Resize API response wrapper
+    /// </summary>
+    public class ResizeConfigResponse
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("data")]
+        public ResizeConfigData? Data { get; set; }
     }
 
     #endregion
