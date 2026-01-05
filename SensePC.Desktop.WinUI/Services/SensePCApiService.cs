@@ -252,6 +252,83 @@ namespace SensePC.Desktop.WinUI.Services
         #endregion
 
         /// <summary>
+        /// Create a new VM instance
+        /// </summary>
+        public async Task<VmActionResponse> CreateVMAsync(string configId, string systemName, string region, int storageSize, string billingPlan)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                if (string.IsNullOrEmpty(idToken))
+                {
+                    return new VmActionResponse { Message = "Not authenticated", StatusCode = 401 };
+                }
+
+                var payload = new
+                {
+                    action = "create",
+                    configId = configId,
+                    systemName = systemName,
+                    region = region,
+                    storageSize = storageSize,
+                    billingPlan = billingPlan
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Post, ApiConfig.VmManagementUrl);
+                request.Headers.Add("Authorization", idToken);
+                request.Content = content;
+
+                var response = await _httpClient.SendAsync(request);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                System.Diagnostics.Debug.WriteLine($"Create VM response: {responseContent}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    // Try to extract error message from response
+                    try
+                    {
+                        var errorResponse = JsonSerializer.Deserialize<Dictionary<string, object>>(responseContent);
+                        var errorMsg = errorResponse?.ContainsKey("message") == true 
+                            ? errorResponse["message"]?.ToString() 
+                            : responseContent;
+                        return new VmActionResponse 
+                        { 
+                            Message = errorMsg ?? $"Failed to create VM", 
+                            StatusCode = (int)response.StatusCode 
+                        };
+                    }
+                    catch
+                    {
+                        return new VmActionResponse 
+                        { 
+                            Message = $"Failed to create VM: {responseContent}", 
+                            StatusCode = (int)response.StatusCode 
+                        };
+                    }
+                }
+
+                try
+                {
+                    return JsonSerializer.Deserialize<VmActionResponse>(responseContent) 
+                        ?? new VmActionResponse { Message = "PC created successfully", StatusCode = 200 };
+                }
+                catch
+                {
+                    return new VmActionResponse { Message = "PC created successfully", StatusCode = 200 };
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Create VM error: {ex.Message}");
+                return new VmActionResponse { Message = ex.Message, StatusCode = 500 };
+            }
+        }
+
+        /// <summary>
         /// Start a VM instance
         /// </summary>
         public async Task<VmActionResponse> StartVMAsync(string instanceId)
@@ -480,9 +557,25 @@ namespace SensePC.Desktop.WinUI.Services
         }
 
         /// <summary>
-        /// Save idle timeout settings for a PC
+        /// Save idle timeout settings for a PC (legacy)
         /// </summary>
         public async Task<bool> SaveIdleTimeoutAsync(string instanceId, int timeoutMinutes)
+        {
+            return await SetIdleTimeoutAsync(instanceId, timeoutMinutes);
+        }
+
+        /// <summary>
+        /// Save idle settings (wrapper for SetIdleTimeoutAsync)
+        /// </summary>
+        public Task<bool> SaveIdleSettingsAsync(string instanceId, int timeoutMinutes)
+        {
+            return SetIdleTimeoutAsync(instanceId, timeoutMinutes);
+        }
+
+        /// <summary>
+        /// Set idle timeout for a PC (POST) - matches website API
+        /// </summary>
+        public async Task<bool> SetIdleTimeoutAsync(string instanceId, int timeoutMinutes)
         {
             try
             {
@@ -493,7 +586,7 @@ namespace SensePC.Desktop.WinUI.Services
                 var payload = new
                 {
                     instanceId = instanceId,
-                    idleTimeout = timeoutMinutes
+                    timeout = timeoutMinutes  // Website uses 'timeout' field
                 };
 
                 var json = JsonSerializer.Serialize(payload);
@@ -503,28 +596,51 @@ namespace SensePC.Desktop.WinUI.Services
                 request.Headers.Add("Authorization", idToken);
                 request.Content = content;
 
+                System.Diagnostics.Debug.WriteLine($"SetIdleTimeout request: {json}");
+
                 var response = await _httpClient.SendAsync(request);
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"SaveIdleTimeout error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"SetIdleTimeout error: {ex.Message}");
                 return false;
             }
         }
 
         /// <summary>
-        /// Save idle settings (wrapper for SaveIdleTimeoutAsync)
+        /// Delete/disable idle timeout for a PC (DELETE) - matches website API
         /// </summary>
-        public Task<bool> SaveIdleSettingsAsync(string instanceId, int timeoutMinutes)
+        public async Task<bool> DeleteIdleTimeoutAsync(string instanceId)
         {
-            return SaveIdleTimeoutAsync(instanceId, timeoutMinutes);
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                if (string.IsNullOrEmpty(idToken))
+                    return false;
+
+                var payload = new { instanceId = instanceId };
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Delete, ApiConfig.IdleUrl);
+                request.Headers.Add("Authorization", idToken);
+                request.Content = content;
+
+                var response = await _httpClient.SendAsync(request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DeleteIdleTimeout error: {ex.Message}");
+                return false;
+            }
         }
 
         /// <summary>
-        /// Save schedule settings for a PC
+        /// Save schedule settings for a PC (matching website API format)
         /// </summary>
-        public async Task<bool> SaveScheduleAsync(string instanceId, object schedule)
+        public async Task<bool> SaveScheduleAsync(string instanceId, ScheduleData schedule)
         {
             try
             {
@@ -535,14 +651,20 @@ namespace SensePC.Desktop.WinUI.Services
                 var payload = new
                 {
                     instanceId = instanceId,
-                    schedule = schedule
+                    timeZone = schedule.TimeZone,
+                    frequency = schedule.Frequency,
+                    startDate = schedule.StartDate,
+                    endDate = schedule.EndDate,
+                    autoStartTime = schedule.AutoStartTime,
+                    autoStopTime = schedule.AutoStopTime,
+                    enabled = schedule.Enabled
                 };
 
                 var json = JsonSerializer.Serialize(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var request = new HttpRequestMessage(HttpMethod.Post, ApiConfig.ScheduleUrl);
-                request.Headers.Add("Authorization", $"Bearer {idToken}");
+                request.Headers.Add("Authorization", idToken);
                 request.Content = content;
 
                 System.Diagnostics.Debug.WriteLine($"SaveSchedule request: {json}");
@@ -553,6 +675,75 @@ namespace SensePC.Desktop.WinUI.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"SaveSchedule error: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Get existing schedule for a PC
+        /// </summary>
+        public async Task<ScheduleData?> GetScheduleAsync(string instanceId)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                if (string.IsNullOrEmpty(idToken))
+                    return null;
+
+                var url = $"{ApiConfig.ScheduleUrl}?instanceId={Uri.EscapeDataString(instanceId)}";
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("Authorization", idToken);
+
+                var response = await _httpClient.SendAsync(request);
+                
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    return null;
+
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+                System.Diagnostics.Debug.WriteLine($"GetSchedule response: {responseContent}");
+
+                var result = JsonSerializer.Deserialize<ScheduleApiResponse>(responseContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                
+                return result?.Data;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetSchedule error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Delete schedule for a PC
+        /// </summary>
+        public async Task<bool> DeleteScheduleAsync(string instanceId)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                if (string.IsNullOrEmpty(idToken))
+                    return false;
+
+                var payload = new { instanceId = instanceId };
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Delete, ApiConfig.ScheduleUrl);
+                request.Headers.Add("Authorization", idToken);
+                request.Content = content;
+
+                var response = await _httpClient.SendAsync(request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DeleteSchedule error: {ex.Message}");
                 return false;
             }
         }
@@ -813,6 +1004,42 @@ namespace SensePC.Desktop.WinUI.Services
             {
                 System.Diagnostics.Debug.WriteLine($"UnassignPC error: {ex.Message}");
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Get Smart PC configuration options from the backend
+        /// </summary>
+        public async Task<SmartPCConfigResponse?> GetSmartPCConfigAsync()
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                
+                var request = new HttpRequestMessage(HttpMethod.Get, ApiConfig.SmartPCConfigUrl);
+                if (!string.IsNullOrEmpty(idToken))
+                {
+                    request.Headers.Add("Authorization", idToken);
+                }
+
+                var response = await _httpClient.SendAsync(request);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                System.Diagnostics.Debug.WriteLine($"SmartPC Config response: {responseContent}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return JsonSerializer.Deserialize<SmartPCConfigResponse>(responseContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetSmartPCConfig error: {ex.Message}");
+                return null;
             }
         }
 
@@ -2128,6 +2355,81 @@ namespace SensePC.Desktop.WinUI.Services
     {
         [System.Text.Json.Serialization.JsonPropertyName("messages")]
         public List<TicketMessage>? Messages { get; set; }
+    }
+
+    /// <summary>
+    /// Smart PC configuration option
+    /// </summary>
+    public class SmartPCConfigOption
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("value")]
+        public string Value { get; set; } = "";
+
+        [System.Text.Json.Serialization.JsonPropertyName("label")]
+        public string Label { get; set; } = "";
+    }
+
+    /// <summary>
+    /// Smart PC configuration response from the backend API
+    /// </summary>
+    public class SmartPCConfigResponse
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("cpuCategories")]
+        public Dictionary<string, Dictionary<string, List<SmartPCConfigOption>>>? CpuCategories { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("cpuOptions")]
+        public Dictionary<string, List<SmartPCConfigOption>>? CpuOptions { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("storageOptions")]
+        public List<SmartPCConfigOption>? StorageOptions { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("osOptions")]
+        public List<SmartPCConfigOption>? OsOptions { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("locationOptions")]
+        public List<SmartPCConfigOption>? LocationOptions { get; set; }
+    }
+
+    /// <summary>
+    /// Schedule data model matching website API
+    /// </summary>
+    public class ScheduleData
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
+        public string? InstanceId { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("timeZone")]
+        public string TimeZone { get; set; } = "UTC";
+
+        [System.Text.Json.Serialization.JsonPropertyName("frequency")]
+        public string Frequency { get; set; } = "everyday";
+
+        [System.Text.Json.Serialization.JsonPropertyName("startDate")]
+        public string? StartDate { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("endDate")]
+        public string? EndDate { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("autoStartTime")]
+        public string? AutoStartTime { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("autoStopTime")]
+        public string? AutoStopTime { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("enabled")]
+        public bool Enabled { get; set; } = true;
+
+        [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+        public string? CreatedAt { get; set; }
+    }
+
+    /// <summary>
+    /// Schedule API response wrapper
+    /// </summary>
+    public class ScheduleApiResponse
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("data")]
+        public ScheduleData? Data { get; set; }
     }
 
     #endregion
