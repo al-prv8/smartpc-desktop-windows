@@ -177,6 +177,7 @@ namespace SensePC.Desktop.WinUI.Models
                 new() { Name = "Recent", Icon = "\uE823", FilterType = "recent" },
                 new() { Name = "Starred", Icon = "\uE734", FilterType = null, IsSpecial = true },
                 new() { Name = "Shared", Icon = "\uE72D", FilterType = null, IsSpecial = true },
+                new() { Name = "Duplicates", Icon = "\uE8C8", FilterType = "duplicates", IsSpecial = true },
             };
         }
     }
@@ -196,5 +197,17 @@ namespace SensePC.Desktop.WinUI.Models
         public string SortOrder { get; set; } = "desc";
         public int Limit { get; set; } = 10;
         public int Page { get; set; } = 1;
+    }
+
+    /// <summary>
+    /// Share link API response
+    /// </summary>
+    public class ShareLinkResponse
+    {
+        [JsonPropertyName("shareUrl")]
+        public string ShareUrl { get; set; } = "";
+
+        [JsonPropertyName("expiresAt")]
+        public string? ExpiresAt { get; set; }
     }
 }

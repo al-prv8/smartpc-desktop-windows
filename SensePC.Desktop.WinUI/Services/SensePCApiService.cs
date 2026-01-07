@@ -2194,6 +2194,52 @@ namespace SensePC.Desktop.WinUI.Services
         }
 
         /// <summary>
+        /// Get download URL for a folder as ZIP archive
+        /// </summary>
+        public async Task<string?> GetFolderDownloadUrlAsync(string folderName, string? parentFolder = null)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                    return null;
+
+                var queryParams = new List<string>
+                {
+                    $"folderName={Uri.EscapeDataString(folderName)}",
+                    $"userId={Uri.EscapeDataString(userId)}",
+                    "region=virginia"
+                };
+
+                if (!string.IsNullOrEmpty(parentFolder))
+                    queryParams.Add($"parentFolder={Uri.EscapeDataString(parentFolder)}");
+
+                var url = $"{ApiConfig.StorageBaseUrl}/download-folder?{string.Join("&", queryParams)}";
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+
+                var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var content = await response.Content.ReadAsStringAsync();
+                var downloadResponse = JsonSerializer.Deserialize<DownloadUrlResponse>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                return downloadResponse?.DownloadUrl;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetFolderDownloadUrl error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Delete a single file
         /// </summary>
         public async Task<bool> DeleteStorageFileAsync(string fileName, string? folder = null, string? key = null)
@@ -2266,6 +2312,230 @@ namespace SensePC.Desktop.WinUI.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"ToggleStar error: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Rename a file or folder
+        /// </summary>
+        public async Task<bool> RenameFileAsync(string oldName, string newName, string? folder = null, string? key = null)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                    return false;
+
+                var payload = new
+                {
+                    region = "virginia",
+                    userId = userId,
+                    oldFileName = oldName,
+                    newFileName = newName,
+                    folder = folder,
+                    key = key
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiConfig.StorageBaseUrl}/rename");
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+                request.Content = content;
+
+                var response = await _httpClient.SendAsync(request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"RenameFile error: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Copy a file to another location
+        /// </summary>
+        public async Task<bool> CopyFileAsync(string fileName, string sourceFolder, string destinationFolder, string? key = null)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                    return false;
+
+                var payload = new
+                {
+                    region = "virginia",
+                    userId = userId,
+                    fileName = fileName,
+                    sourceFolder = sourceFolder,
+                    destinationFolder = destinationFolder,
+                    key = key
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiConfig.StorageBaseUrl}/copy");
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+                request.Content = content;
+
+                var response = await _httpClient.SendAsync(request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"CopyFile error: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Move a file to another location
+        /// </summary>
+        public async Task<bool> MoveFileAsync(string fileName, string sourceFolder, string destinationFolder, string? key = null)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                    return false;
+
+                var payload = new
+                {
+                    region = "virginia",
+                    userId = userId,
+                    fileName = fileName,
+                    sourceFolder = sourceFolder,
+                    destinationFolder = destinationFolder,
+                    key = key
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiConfig.StorageBaseUrl}/move");
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+                request.Content = content;
+
+                var response = await _httpClient.SendAsync(request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"MoveFile error: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Bulk delete multiple files
+        /// </summary>
+        public async Task<int> BulkDeleteAsync(List<string> fileNames, string? folder = null)
+        {
+            int deleted = 0;
+            foreach (var fileName in fileNames)
+            {
+                var success = await DeleteStorageFileAsync(fileName, folder);
+                if (success) deleted++;
+            }
+            return deleted;
+        }
+
+        /// <summary>
+        /// Generate a share link for a file
+        /// </summary>
+        public async Task<string?> GenerateShareLinkAsync(string fileName, string? folder = null, string? key = null)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                    return null;
+
+                var payload = new
+                {
+                    region = "virginia",
+                    userId = userId,
+                    fileName = fileName,
+                    folder = folder,
+                    key = key
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiConfig.StorageBaseUrl}/share/generate");
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+                request.Content = content;
+
+                var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var shareResponse = JsonSerializer.Deserialize<ShareLinkResponse>(responseContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                return shareResponse?.ShareUrl;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GenerateShareLink error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Share file via email
+        /// </summary>
+        public async Task<bool> ShareFileViaEmailAsync(string fileName, string[] emails, string? folder = null, string? key = null, int expirationHours = 24, string? password = null)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                    return false;
+
+                var payload = new
+                {
+                    region = "virginia",
+                    userId = userId,
+                    fileName = fileName,
+                    folder = folder,
+                    key = key,
+                    emails = emails,
+                    expirationHours = expirationHours,
+                    password = password
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiConfig.StorageBaseUrl}/share/email");
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+                request.Content = content;
+
+                var response = await _httpClient.SendAsync(request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ShareFileViaEmail error: {ex.Message}");
                 return false;
             }
         }

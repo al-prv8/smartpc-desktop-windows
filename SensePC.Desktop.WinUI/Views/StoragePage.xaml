@@ -162,6 +162,15 @@
                                 <ComboBoxItem Content="Name" Tag="name"/>
                                 <ComboBoxItem Content="Size" Tag="size"/>
                             </ComboBox>
+                            <Button x:Name="BulkDeleteButton"
+                                    Visibility="Collapsed"
+                                    Click="BulkDelete_Click"
+                                    ToolTipService.ToolTip="Delete selected files">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE74D;" FontSize="14"/>
+                                    <TextBlock x:Name="BulkDeleteText" Text="Delete"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </Grid>
 
@@ -189,8 +198,13 @@
                                    FontWeight="SemiBold"/>
                     </Grid>
 
-                    <!-- Content Area -->
-                    <Grid Grid.Row="2" MinHeight="300">
+                    <!-- Content Area with Drag-Drop Support -->
+                    <Grid Grid.Row="2" MinHeight="300"
+                          AllowDrop="True"
+                          DragOver="ContentArea_DragOver"
+                          DragLeave="ContentArea_DragLeave"
+                          Drop="ContentArea_Drop"
+                          x:Name="ContentAreaGrid">
                         <!-- Loading State -->
                         <StackPanel x:Name="LoadingState" 
                                     Visibility="Collapsed" 
@@ -238,6 +252,7 @@
                                   SelectionMode="Extended"
                                   IsItemClickEnabled="True"
                                   ItemClick="FileItem_Click"
+                                  SelectionChanged="FilesListView_SelectionChanged"
                                   Padding="8,0">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
@@ -297,9 +312,30 @@
                                             <Button.Flyout>
                                                 <MenuFlyout>
                                                     <MenuFlyoutItem Text="Download" Icon="Download" Click="Download_Click"/>
+                                                    <MenuFlyoutItem Text="Rename" Click="Rename_Click">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE8AC;"/>
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
                                                     <MenuFlyoutItem Text="Star" Click="Star_Click">
                                                         <MenuFlyoutItem.Icon>
                                                             <FontIcon Glyph="&#xE734;"/>
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                                    <MenuFlyoutItem Text="Share" Click="Share_Click">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE72D;"/>
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                                    <MenuFlyoutSeparator/>
+                                                    <MenuFlyoutItem Text="Copy to..." Click="Copy_Click">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE8C8;"/>
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                                    <MenuFlyoutItem Text="Move to..." Click="Move_Click">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE8DE;"/>
                                                         </MenuFlyoutItem.Icon>
                                                     </MenuFlyoutItem>
                                                     <MenuFlyoutSeparator/>

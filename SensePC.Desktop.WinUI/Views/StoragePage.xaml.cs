@@ -376,11 +376,6 @@ namespace SensePC.Desktop.WinUI.Views
             _ = LoadStorageDataAsync();
         }
 
-        private void StoragePlans_Click(object sender, RoutedEventArgs e)
-        {
-            // TODO: Show storage plans dialog
-        }
-
         private void PrevPage_Click(object sender, RoutedEventArgs e)
         {
             if (_currentPage > 1)
@@ -414,6 +409,77 @@ namespace SensePC.Desktop.WinUI.Views
             // Menu flyout handles this
         }
 
+        private async void StoragePlans_Click(object sender, RoutedEventArgs e)
+        {
+            var contentStack = new StackPanel { Spacing = 16 };
+            
+            // Current plan
+            contentStack.Children.Add(new TextBlock 
+            { 
+                Text = "Current Plan: Free (1 TB)",
+                Style = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"]
+            });
+            
+            // Available plans
+            var plansPanel = new StackPanel { Spacing = 12 };
+            
+            var plans = new[]
+            {
+                ("Pro", "5 TB", "$9.99/mo"),
+                ("Business", "10 TB", "$19.99/mo"),
+                ("Enterprise", "Unlimited", "Contact Sales")
+            };
+            
+            foreach (var (name, storage, price) in plans)
+            {
+                var grid = new Grid();
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                
+                var infoStack = new StackPanel();
+                infoStack.Children.Add(new TextBlock { Text = name, FontWeight = Microsoft.UI.Text.FontWeights.Bold });
+                infoStack.Children.Add(new TextBlock { Text = storage, Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["TextFillColorSecondaryBrush"] });
+                grid.Children.Add(infoStack);
+                
+                var priceText = new TextBlock 
+                { 
+                    Text = price, 
+                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                Grid.SetColumn(priceText, 1);
+                grid.Children.Add(priceText);
+                
+                var planCard = new Border
+                {
+                    Background = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["CardBackgroundFillColorSecondaryBrush"],
+                    CornerRadius = new CornerRadius(8),
+                    Padding = new Thickness(16),
+                    Child = grid
+                };
+                
+                plansPanel.Children.Add(planCard);
+            }
+            
+            contentStack.Children.Add(plansPanel);
+            
+            var dialog = new ContentDialog
+            {
+                Title = "Storage Plans",
+                Content = contentStack,
+                PrimaryButtonText = "Learn More",
+                CloseButtonText = "Close",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = this.XamlRoot
+            };
+            
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            {
+                // Open plans page in browser
+                await Windows.System.Launcher.LaunchUriAsync(new Uri("https://sensepc.com/storage/plans"));
+            }
+        }
+
         private async void Download_Click(object sender, RoutedEventArgs e)
         {
             if (sender is MenuFlyoutItem menuItem && 
@@ -421,11 +487,34 @@ namespace SensePC.Desktop.WinUI.Views
                 flyout.Target is Button button &&
                 button.Tag is StorageItem item)
             {
-                var downloadUrl = await _apiService.GetDownloadUrlAsync(item.FileName, _currentFolder, item.Id);
-                if (!string.IsNullOrEmpty(downloadUrl))
+                if (item.IsFolder)
                 {
-                    // Open download URL in browser or use Windows.System.Launcher
-                    await Windows.System.Launcher.LaunchUriAsync(new Uri(downloadUrl));
+                    // Download folder as ZIP
+                    var downloadUrl = await _apiService.GetFolderDownloadUrlAsync(item.FileName, _currentFolder);
+                    if (!string.IsNullOrEmpty(downloadUrl))
+                    {
+                        await Windows.System.Launcher.LaunchUriAsync(new Uri(downloadUrl));
+                    }
+                    else
+                    {
+                        var dialog = new ContentDialog
+                        {
+                            Title = "Download Failed",
+                            Content = "Could not generate folder download URL. Please try again.",
+                            CloseButtonText = "OK",
+                            XamlRoot = this.XamlRoot
+                        };
+                        await dialog.ShowAsync();
+                    }
+                }
+                else
+                {
+                    // Download single file
+                    var downloadUrl = await _apiService.GetDownloadUrlAsync(item.FileName, _currentFolder, item.Id);
+                    if (!string.IsNullOrEmpty(downloadUrl))
+                    {
+                        await Windows.System.Launcher.LaunchUriAsync(new Uri(downloadUrl));
+                    }
                 }
             }
         }
@@ -466,5 +555,368 @@ namespace SensePC.Desktop.WinUI.Views
                 }
             }
         }
+
+        private async void Share_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && 
+                menuItem.Parent is MenuFlyout flyout &&
+                flyout.Target is Button button &&
+                button.Tag is StorageItem item)
+            {
+                var dialog = new Dialogs.ShareDialog(item, this.XamlRoot, _currentFolder);
+                await dialog.ShowAsync();
+                
+                if (dialog.FileShared)
+                {
+                    await LoadFilesAsync();
+                }
+            }
+        }
+
+        private async void Rename_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && 
+                menuItem.Parent is MenuFlyout flyout &&
+                flyout.Target is Button button &&
+                button.Tag is StorageItem item)
+            {
+                var input = new TextBox
+                {
+                    Text = item.FileName,
+                    PlaceholderText = "Enter new name",
+                    Width = 300
+                };
+                input.SelectAll();
+
+                var dialog = new ContentDialog
+                {
+                    Title = "Rename",
+                    Content = input,
+                    PrimaryButtonText = "Rename",
+                    CloseButtonText = "Cancel",
+                    DefaultButton = ContentDialogButton.Primary,
+                    XamlRoot = this.XamlRoot
+                };
+
+                if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+                {
+                    var newName = input.Text?.Trim();
+                    if (!string.IsNullOrEmpty(newName) && newName != item.FileName)
+                    {
+                        var success = await _apiService.RenameFileAsync(item.FileName, newName, _currentFolder, item.Id);
+                        if (success)
+                        {
+                            await LoadFilesAsync();
+                        }
+                        else
+                        {
+                            var errorDialog = new ContentDialog
+                            {
+                                Title = "Rename Failed",
+                                Content = "Could not rename the file. Please try again.",
+                                CloseButtonText = "OK",
+                                XamlRoot = this.XamlRoot
+                            };
+                            await errorDialog.ShowAsync();
+                        }
+                    }
+                }
+            }
+        }
+
+        private async void Copy_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && 
+                menuItem.Parent is MenuFlyout flyout &&
+                flyout.Target is Button button &&
+                button.Tag is StorageItem item)
+            {
+                var input = new TextBox
+                {
+                    Text = "",
+                    PlaceholderText = "Enter destination folder (leave empty for root)",
+                    Width = 300
+                };
+
+                var dialog = new ContentDialog
+                {
+                    Title = $"Copy \"{item.FileName}\"",
+                    Content = new StackPanel
+                    {
+                        Spacing = 12,
+                        Children =
+                        {
+                            new TextBlock { Text = "Enter the destination folder path:", TextWrapping = TextWrapping.Wrap },
+                            input
+                        }
+                    },
+                    PrimaryButtonText = "Copy",
+                    CloseButtonText = "Cancel",
+                    DefaultButton = ContentDialogButton.Primary,
+                    XamlRoot = this.XamlRoot
+                };
+
+                if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+                {
+                    var destFolder = input.Text?.Trim();
+                    var success = await _apiService.CopyFileAsync(item.FileName, _currentFolder ?? "", destFolder ?? "", item.Id);
+                    if (success)
+                    {
+                        await LoadFilesAsync();
+                    }
+                    else
+                    {
+                        var errorDialog = new ContentDialog
+                        {
+                            Title = "Copy Failed",
+                            Content = "Could not copy the file. Please try again.",
+                            CloseButtonText = "OK",
+                            XamlRoot = this.XamlRoot
+                        };
+                        await errorDialog.ShowAsync();
+                    }
+                }
+            }
+        }
+
+        private async void Move_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && 
+                menuItem.Parent is MenuFlyout flyout &&
+                flyout.Target is Button button &&
+                button.Tag is StorageItem item)
+            {
+                var input = new TextBox
+                {
+                    Text = "",
+                    PlaceholderText = "Enter destination folder (leave empty for root)",
+                    Width = 300
+                };
+
+                var dialog = new ContentDialog
+                {
+                    Title = $"Move \"{item.FileName}\"",
+                    Content = new StackPanel
+                    {
+                        Spacing = 12,
+                        Children =
+                        {
+                            new TextBlock { Text = "Enter the destination folder path:", TextWrapping = TextWrapping.Wrap },
+                            input
+                        }
+                    },
+                    PrimaryButtonText = "Move",
+                    CloseButtonText = "Cancel",
+                    DefaultButton = ContentDialogButton.Primary,
+                    XamlRoot = this.XamlRoot
+                };
+
+                if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+                {
+                    var destFolder = input.Text?.Trim();
+                    var success = await _apiService.MoveFileAsync(item.FileName, _currentFolder ?? "", destFolder ?? "", item.Id);
+                    if (success)
+                    {
+                        await LoadFilesAsync();
+                    }
+                    else
+                    {
+                        var errorDialog = new ContentDialog
+                        {
+                            Title = "Move Failed",
+                            Content = "Could not move the file. Please try again.",
+                            CloseButtonText = "OK",
+                            XamlRoot = this.XamlRoot
+                        };
+                        await errorDialog.ShowAsync();
+                    }
+                }
+            }
+        }
+
+        #region Drag-Drop Support
+
+        private void ContentArea_DragOver(object sender, DragEventArgs e)
+        {
+            if (e.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
+            {
+                e.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+                e.DragUIOverride.Caption = "Drop to upload";
+                e.DragUIOverride.IsCaptionVisible = true;
+                e.DragUIOverride.IsGlyphVisible = true;
+                
+                // Visual feedback - highlight the content area
+                ContentAreaGrid.Background = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["AccentFillColorSelectedBrush"];
+            }
+        }
+
+        private void ContentArea_DragLeave(object sender, DragEventArgs e)
+        {
+            // Remove visual feedback
+            ContentAreaGrid.Background = null;
+        }
+
+        private async void ContentArea_Drop(object sender, DragEventArgs e)
+        {
+            // Remove visual feedback
+            ContentAreaGrid.Background = null;
+            
+            if (e.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
+            {
+                var items = await e.DataView.GetStorageItemsAsync();
+                var files = items.OfType<Windows.Storage.StorageFile>().ToList();
+                
+                if (files.Count > 0)
+                {
+                    await UploadDroppedFilesAsync(files);
+                }
+            }
+        }
+
+        private async Task UploadDroppedFilesAsync(List<Windows.Storage.StorageFile> files)
+        {
+            // Show uploading indicator
+            var statusDialog = new ContentDialog
+            {
+                Title = "Uploading Files",
+                Content = new StackPanel
+                {
+                    Spacing = 16,
+                    Children =
+                    {
+                        new ProgressRing { IsActive = true, Width = 40, Height = 40 },
+                        new TextBlock { Text = $"Uploading {files.Count} file(s)...", HorizontalAlignment = HorizontalAlignment.Center }
+                    }
+                },
+                XamlRoot = this.XamlRoot
+            };
+
+            _ = statusDialog.ShowAsync();
+
+            int completed = 0;
+            foreach (var file in files)
+            {
+                try
+                {
+                    var props = await file.GetBasicPropertiesAsync();
+                    var contentType = file.ContentType ?? "application/octet-stream";
+                    
+                    // Get upload URL
+                    var uploadResponse = await _apiService.GetUploadUrlAsync(
+                        file.Name,
+                        contentType,
+                        (long)props.Size,
+                        _currentFolder
+                    );
+
+                    if (uploadResponse != null && !string.IsNullOrEmpty(uploadResponse.UploadUrl))
+                    {
+                        // Read file bytes
+                        using var stream = await file.OpenStreamForReadAsync();
+                        using var ms = new System.IO.MemoryStream();
+                        await stream.CopyToAsync(ms);
+                        var bytes = ms.ToArray();
+
+                        // Upload to presigned URL
+                        var uploadSuccess = await _apiService.UploadToPresignedUrlAsync(
+                            uploadResponse.UploadUrl,
+                            bytes,
+                            contentType
+                        );
+
+                        // Confirm upload
+                        if (uploadSuccess && !string.IsNullOrEmpty(uploadResponse.Key))
+                        {
+                            await _apiService.ConfirmUploadAsync(
+                                uploadResponse.FinalFileName ?? file.Name,
+                                contentType,
+                                (long)props.Size,
+                                uploadResponse.Key,
+                                _currentFolder
+                            );
+                            completed++;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Drop upload error for {file.Name}: {ex.Message}");
+                }
+            }
+
+            statusDialog.Hide();
+
+            // Refresh file list
+            await LoadFilesAsync();
+        }
+
+        #endregion
+
+        #region Bulk Operations
+
+        private void FilesListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var selectedCount = FilesListView.SelectedItems.Count;
+            if (selectedCount > 0)
+            {
+                BulkDeleteButton.Visibility = Visibility.Visible;
+                BulkDeleteText.Text = $"Delete ({selectedCount})";
+            }
+            else
+            {
+                BulkDeleteButton.Visibility = Visibility.Collapsed;
+                BulkDeleteText.Text = "Delete";
+            }
+        }
+
+        private async void BulkDelete_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedItems = FilesListView.SelectedItems.Cast<StorageItem>().ToList();
+            if (selectedItems.Count == 0) return;
+
+            var dialog = new ContentDialog
+            {
+                Title = "Delete Files",
+                Content = $"Are you sure you want to delete {selectedItems.Count} selected item(s)? This action cannot be undone.",
+                PrimaryButtonText = "Delete",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = this.XamlRoot
+            };
+
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            {
+                var progressDialog = new ContentDialog
+                {
+                    Title = "Deleting Files",
+                    Content = new StackPanel
+                    {
+                        Spacing = 16,
+                        Children =
+                        {
+                            new ProgressRing { IsActive = true, Width = 40, Height = 40 },
+                            new TextBlock { Text = $"Deleting {selectedItems.Count} file(s)...", HorizontalAlignment = HorizontalAlignment.Center }
+                        }
+                    },
+                    XamlRoot = this.XamlRoot
+                };
+
+                _ = progressDialog.ShowAsync();
+
+                int deleted = 0;
+                foreach (var item in selectedItems)
+                {
+                    var success = await _apiService.DeleteStorageFileAsync(item.FileName, _currentFolder, item.Id);
+                    if (success) deleted++;
+                }
+
+                progressDialog.Hide();
+
+                // Refresh file list
+                await LoadFilesAsync();
+            }
+        }
+
+        #endregion
     }
 }
