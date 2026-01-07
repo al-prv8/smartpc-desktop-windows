@@ -1886,6 +1886,391 @@ namespace SensePC.Desktop.WinUI.Services
         }
 
         #endregion
+
+        #region Storage APIs (Sense Cloud)
+
+        /// <summary>
+        /// Get storage usage statistics
+        /// </summary>
+        public async Task<StorageUsage?> GetStorageUsageAsync()
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                    return null;
+
+                var url = $"{ApiConfig.StorageBaseUrl}/usage?userId={Uri.EscapeDataString(userId)}";
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+
+                var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var content = await response.Content.ReadAsStringAsync();
+                System.Diagnostics.Debug.WriteLine($"StorageUsage response: {content}");
+
+                return JsonSerializer.Deserialize<StorageUsage>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetStorageUsage error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// List files in storage with filtering and pagination
+        /// </summary>
+        public async Task<StorageListResponse?> ListFilesAsync(StorageListRequest? listRequest = null)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                    return null;
+
+                listRequest ??= new StorageListRequest();
+
+                // Build query string
+                var queryParams = new List<string>
+                {
+                    $"userId={Uri.EscapeDataString(userId)}",
+                    "region=virginia",
+                    $"limit={listRequest.Limit}",
+                    $"page={listRequest.Page}"
+                };
+
+                if (!string.IsNullOrEmpty(listRequest.Type))
+                    queryParams.Add($"type={Uri.EscapeDataString(listRequest.Type)}");
+                if (!string.IsNullOrEmpty(listRequest.Search))
+                    queryParams.Add($"search={Uri.EscapeDataString(listRequest.Search)}");
+                if (listRequest.Starred == true)
+                    queryParams.Add("starred=true");
+                if (listRequest.Shared == true)
+                    queryParams.Add("shared=true");
+                if (!string.IsNullOrEmpty(listRequest.Modified))
+                    queryParams.Add($"modified={Uri.EscapeDataString(listRequest.Modified)}");
+                if (!string.IsNullOrEmpty(listRequest.Folder))
+                    queryParams.Add($"folder={Uri.EscapeDataString(listRequest.Folder)}");
+                if (!string.IsNullOrEmpty(listRequest.SortBy))
+                    queryParams.Add($"sortBy={Uri.EscapeDataString(listRequest.SortBy)}");
+                if (!string.IsNullOrEmpty(listRequest.SortOrder))
+                    queryParams.Add($"sortOrder={Uri.EscapeDataString(listRequest.SortOrder)}");
+
+                var url = $"{ApiConfig.StorageBaseUrl}/list?{string.Join("&", queryParams)}";
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+
+                var response = await _httpClient.SendAsync(request);
+                var content = await response.Content.ReadAsStringAsync();
+
+                System.Diagnostics.Debug.WriteLine($"ListFiles response: {content}");
+
+                if (!response.IsSuccessStatusCode)
+                    return new StorageListResponse();
+
+                return JsonSerializer.Deserialize<StorageListResponse>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                }) ?? new StorageListResponse();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ListFiles error: {ex.Message}");
+                return new StorageListResponse();
+            }
+        }
+
+        /// <summary>
+        /// Create a new folder in storage
+        /// </summary>
+        public async Task<bool> CreateFolderAsync(string folderName, string? parentFolder = null)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                    return false;
+
+                var fullFolderName = string.IsNullOrEmpty(parentFolder) 
+                    ? folderName 
+                    : $"{parentFolder}/{folderName}";
+
+                var payload = new
+                {
+                    region = "virginia",
+                    userId = userId,
+                    folderName = fullFolderName
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiConfig.StorageBaseUrl}/create-folder");
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+                request.Content = content;
+
+                System.Diagnostics.Debug.WriteLine($"CreateFolder request: {json}");
+
+                var response = await _httpClient.SendAsync(request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"CreateFolder error: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Get presigned upload URL for a file
+        /// </summary>
+        public async Task<UploadUrlResponse?> GetUploadUrlAsync(string fileName, string fileType, long fileSize, string? folder = null)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                    return null;
+
+                var payload = new
+                {
+                    fileName = fileName,
+                    fileType = fileType,
+                    userId = userId,
+                    region = "virginia",
+                    size = fileSize.ToString(),
+                    status = "private",
+                    starred = false,
+                    folder = folder
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiConfig.StorageBaseUrl}/upload");
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+                request.Content = content;
+
+                var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<UploadUrlResponse>(responseContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetUploadUrl error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Confirm file upload completion
+        /// </summary>
+        public async Task<bool> ConfirmUploadAsync(string fileName, string fileType, long fileSize, string key, string? folder = null)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                    return false;
+
+                var payload = new
+                {
+                    fileName = fileName,
+                    fileType = fileType,
+                    userId = userId,
+                    region = "virginia",
+                    size = fileSize.ToString(),
+                    status = "private",
+                    starred = false,
+                    folder = folder,
+                    key = key
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiConfig.StorageBaseUrl}/upload-complete");
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+                request.Content = content;
+
+                var response = await _httpClient.SendAsync(request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ConfirmUpload error: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Upload file to presigned URL
+        /// </summary>
+        public async Task<bool> UploadToPresignedUrlAsync(string uploadUrl, byte[] fileData, string contentType)
+        {
+            try
+            {
+                var content = new ByteArrayContent(fileData);
+                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+
+                var response = await _httpClient.PutAsync(uploadUrl, content);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"UploadToPresignedUrl error: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Get download URL for a file
+        /// </summary>
+        public async Task<string?> GetDownloadUrlAsync(string fileName, string? folder = null, string? key = null)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                    return null;
+
+                var queryParams = new List<string>
+                {
+                    $"fileName={Uri.EscapeDataString(fileName)}",
+                    $"userId={Uri.EscapeDataString(userId)}",
+                    "region=virginia"
+                };
+
+                if (!string.IsNullOrEmpty(folder))
+                    queryParams.Add($"folder={Uri.EscapeDataString(folder)}");
+                if (!string.IsNullOrEmpty(key))
+                    queryParams.Add($"key={Uri.EscapeDataString(key)}");
+
+                var url = $"{ApiConfig.StorageBaseUrl}/download?{string.Join("&", queryParams)}";
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+
+                var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var content = await response.Content.ReadAsStringAsync();
+                var downloadResponse = JsonSerializer.Deserialize<DownloadUrlResponse>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                return downloadResponse?.DownloadUrl;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetDownloadUrl error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Delete a single file
+        /// </summary>
+        public async Task<bool> DeleteStorageFileAsync(string fileName, string? folder = null, string? key = null)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                    return false;
+
+                var queryParams = new List<string>
+                {
+                    $"fileName={Uri.EscapeDataString(fileName)}",
+                    $"userId={Uri.EscapeDataString(userId)}",
+                    "region=virginia"
+                };
+
+                if (!string.IsNullOrEmpty(folder))
+                    queryParams.Add($"folder={Uri.EscapeDataString(folder)}");
+                if (!string.IsNullOrEmpty(key))
+                    queryParams.Add($"key={Uri.EscapeDataString(key)}");
+
+                var url = $"{ApiConfig.StorageBaseUrl}/delete?{string.Join("&", queryParams)}";
+                var request = new HttpRequestMessage(HttpMethod.Delete, url);
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+
+                var response = await _httpClient.SendAsync(request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DeleteStorageFile error: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Star or unstar a file
+        /// </summary>
+        public async Task<bool> ToggleStarAsync(string key, bool star)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                    return false;
+
+                var endpoint = star ? "star" : "unstar";
+                var payload = new
+                {
+                    region = "us-east-1",
+                    userId = userId,
+                    key = key
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiConfig.StorageBaseUrl}/{endpoint}");
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+                request.Content = content;
+
+                var response = await _httpClient.SendAsync(request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ToggleStar error: {ex.Message}");
+                return false;
+            }
+        }
+
+        #endregion
     }
 
     /// <summary>

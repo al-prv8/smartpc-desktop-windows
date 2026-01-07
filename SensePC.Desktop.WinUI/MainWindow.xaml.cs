@@ -180,8 +180,10 @@ namespace SensePC.Desktop.WinUI
                         DashboardFrame.Navigate(typeof(Views.SupportPage));
                         break;
                     case "Storage":
+                        DashboardFrame.Navigate(typeof(Views.StoragePage));
+                        break;
                     case "Security":
-                        // TODO: Implement these pages
+                        // TODO: Implement Security page
                         break;
                 }
             }

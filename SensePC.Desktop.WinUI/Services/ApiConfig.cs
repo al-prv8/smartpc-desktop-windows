@@ -43,5 +43,8 @@ namespace SensePC.Desktop.WinUI.Services
 
         // Support APIs (DEV)
         public const string SupportUrl = "https://lvir6hp7hb.execute-api.us-east-1.amazonaws.com/dev/";
+
+        // Storage APIs (Sense Cloud) - DEV
+        public const string StorageBaseUrl = "https://bijv5mqt5l.execute-api.us-east-1.amazonaws.com/dev";
     }
 }
