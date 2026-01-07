@@ -290,77 +290,11 @@ namespace SensePC.Desktop.WinUI.Views
         {
             try
             {
-                var picker = new FileOpenPicker();
-                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-                picker.FileTypeFilter.Add("*");
-
-                // Get the window handle
-                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
-                WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
-
-                var files = await picker.PickMultipleFilesAsync();
-                if (files?.Count > 0)
+                var dialog = new Dialogs.UploadDialog(this.XamlRoot, _currentFolder);
+                var result = await dialog.ShowAsync();
+                
+                if (dialog.FilesUploaded)
                 {
-                    var progressDialog = new ContentDialog
-                    {
-                        Title = "Uploading Files",
-                        Content = new StackPanel
-                        {
-                            Children =
-                            {
-                                new ProgressRing { IsActive = true, Width = 48, Height = 48 },
-                                new TextBlock { Text = $"Uploading {files.Count} file(s)...", Margin = new Thickness(0, 16, 0, 0) }
-                            }
-                        },
-                        XamlRoot = this.XamlRoot
-                    };
-
-                    _ = progressDialog.ShowAsync();
-
-                    foreach (var file in files)
-                    {
-                        try
-                        {
-                            var props = await file.GetBasicPropertiesAsync();
-                            var uploadResponse = await _apiService.GetUploadUrlAsync(
-                                file.Name,
-                                file.ContentType ?? "application/octet-stream",
-                                (long)props.Size,
-                                _currentFolder
-                            );
-
-                            if (uploadResponse != null && !string.IsNullOrEmpty(uploadResponse.UploadUrl))
-                            {
-                                using var stream = await file.OpenStreamForReadAsync();
-                                var bytes = new byte[stream.Length];
-                                await stream.ReadAsync(bytes, 0, bytes.Length);
-
-                                var uploadSuccess = await _apiService.UploadToPresignedUrlAsync(
-                                    uploadResponse.UploadUrl,
-                                    bytes,
-                                    file.ContentType ?? "application/octet-stream"
-                                );
-
-                                if (uploadSuccess && !string.IsNullOrEmpty(uploadResponse.Key))
-                                {
-                                    await _apiService.ConfirmUploadAsync(
-                                        uploadResponse.FinalFileName ?? file.Name,
-                                        file.ContentType ?? "application/octet-stream",
-                                        (long)props.Size,
-                                        uploadResponse.Key,
-                                        _currentFolder
-                                    );
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Upload file error: {ex.Message}");
-                        }
-                    }
-
-                    progressDialog.Hide();
-
                     // Refresh the file list
                     await LoadFilesAsync();
                 }
