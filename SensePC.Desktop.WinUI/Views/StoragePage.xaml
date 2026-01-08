@@ -110,6 +110,132 @@
                             <StackPanel x:Name="CategoriesPanel" Spacing="4"/>
                         </StackPanel>
                     </Border>
+
+                    <!-- Recent Activity Card -->
+                    <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1" CornerRadius="8" Padding="16">
+                        <StackPanel Spacing="12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Recent Activity" 
+                                           Style="{StaticResource BodyStrongTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <Button Grid.Column="1" Padding="4" 
+                                        Click="RefreshActivity_Click"
+                                        ToolTipService.ToolTip="Refresh activity"
+                                        Background="Transparent" BorderThickness="0">
+                                    <FontIcon Glyph="&#xE72C;" FontSize="12"/>
+                                </Button>
+                            </Grid>
+                            
+                            <!-- Activity Loading -->
+                            <StackPanel x:Name="ActivityLoadingPanel" Visibility="Collapsed" Spacing="8">
+                                <ProgressRing Width="20" Height="20" IsActive="True"/>
+                                <TextBlock Text="Loading activity..." FontSize="12"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            
+                            <!-- Activity List -->
+                            <StackPanel x:Name="ActivityListPanel" Spacing="8">
+                                <!-- Activity items will be populated here -->
+                            </StackPanel>
+                            
+                            <!-- Empty State -->
+                            <TextBlock x:Name="ActivityEmptyText" 
+                                       Text="No recent activity"
+                                       FontSize="12"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       Visibility="Collapsed"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Connected Storage Card -->
+                    <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1" CornerRadius="8" Padding="16">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Connected Storage" 
+                                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            
+                            <!-- Dropbox -->
+                            <Button HorizontalAlignment="Stretch" 
+                                    HorizontalContentAlignment="Left"
+                                    Click="ConnectDropbox_Click"
+                                    Padding="12,10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="32"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon Glyph="&#xE753;" FontSize="16" 
+                                              Foreground="#0061FF" 
+                                              VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                        <TextBlock Text="Dropbox" FontSize="13"/>
+                                        <TextBlock Text="Coming soon" FontSize="11"
+                                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                    </StackPanel>
+                                    <FontIcon Grid.Column="2" Glyph="&#xE76C;" FontSize="12"
+                                              Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                </Grid>
+                            </Button>
+                            
+                            <!-- Google Drive -->
+                            <Button HorizontalAlignment="Stretch" 
+                                    HorizontalContentAlignment="Left"
+                                    Click="ConnectGoogleDrive_Click"
+                                    Padding="12,10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="32"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon Glyph="&#xE753;" FontSize="16" 
+                                              Foreground="#4285F4" 
+                                              VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                        <TextBlock Text="Google Drive" FontSize="13"/>
+                                        <TextBlock Text="Coming soon" FontSize="11"
+                                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                    </StackPanel>
+                                    <FontIcon Grid.Column="2" Glyph="&#xE76C;" FontSize="12"
+                                              Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                </Grid>
+                            </Button>
+                            
+                            <!-- iCloud -->
+                            <Button HorizontalAlignment="Stretch" 
+                                    HorizontalContentAlignment="Left"
+                                    Click="ConnectiCloud_Click"
+                                    Padding="12,10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="32"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon Glyph="&#xE753;" FontSize="16" 
+                                              Foreground="#5AC8FA" 
+                                              VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                        <TextBlock Text="iCloud Drive" FontSize="13"/>
+                                        <TextBlock Text="Coming soon" FontSize="11"
+                                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                    </StackPanel>
+                                    <FontIcon Grid.Column="2" Glyph="&#xE76C;" FontSize="12"
+                                              Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                </Grid>
+                            </Button>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </ScrollViewer>
 
@@ -162,6 +288,30 @@
                                 <ComboBoxItem Content="Name" Tag="name"/>
                                 <ComboBoxItem Content="Size" Tag="size"/>
                             </ComboBox>
+                            <ToggleButton x:Name="ViewToggleButton"
+                                          Click="ViewToggle_Click"
+                                          Padding="10"
+                                          ToolTipService.ToolTip="Toggle Grid/List view">
+                                <FontIcon x:Name="ViewToggleIcon" Glyph="&#xF0E2;" FontSize="14"/>
+                            </ToggleButton>
+                            <Button x:Name="BulkDownloadButton"
+                                    Visibility="Collapsed"
+                                    Click="BulkDownload_Click"
+                                    ToolTipService.ToolTip="Download selected files">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE896;" FontSize="14"/>
+                                    <TextBlock x:Name="BulkDownloadText" Text="Download"/>
+                                </StackPanel>
+                            </Button>
+                            <Button x:Name="BulkShareButton"
+                                    Visibility="Collapsed"
+                                    Click="BulkShare_Click"
+                                    ToolTipService.ToolTip="Share selected files">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE72D;" FontSize="14"/>
+                                    <TextBlock x:Name="BulkShareText" Text="Share"/>
+                                </StackPanel>
+                            </Button>
                             <Button x:Name="BulkDeleteButton"
                                     Visibility="Collapsed"
                                     Click="BulkDelete_Click"
@@ -311,35 +461,50 @@
                                             <FontIcon Glyph="&#xE712;" FontSize="14"/>
                                             <Button.Flyout>
                                                 <MenuFlyout>
-                                                    <MenuFlyoutItem Text="Download" Icon="Download" Click="Download_Click"/>
-                                                    <MenuFlyoutItem Text="Rename" Click="Rename_Click">
+                                                    <MenuFlyoutItem Text="Preview" Click="Preview_Click" Tag="{Binding}">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE890;"/>
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                                    <MenuFlyoutItem Text="Download" Icon="Download" Click="Download_Click" Tag="{Binding}"/>
+                                                    <MenuFlyoutItem Text="Rename" Click="Rename_Click" Tag="{Binding}">
                                                         <MenuFlyoutItem.Icon>
                                                             <FontIcon Glyph="&#xE8AC;"/>
                                                         </MenuFlyoutItem.Icon>
                                                     </MenuFlyoutItem>
-                                                    <MenuFlyoutItem Text="Star" Click="Star_Click">
-                                                        <MenuFlyoutItem.Icon>
-                                                            <FontIcon Glyph="&#xE734;"/>
-                                                        </MenuFlyoutItem.Icon>
-                                                    </MenuFlyoutItem>
-                                                    <MenuFlyoutItem Text="Share" Click="Share_Click">
-                                                        <MenuFlyoutItem.Icon>
-                                                            <FontIcon Glyph="&#xE72D;"/>
-                                                        </MenuFlyoutItem.Icon>
-                                                    </MenuFlyoutItem>
-                                                    <MenuFlyoutSeparator/>
-                                                    <MenuFlyoutItem Text="Copy to..." Click="Copy_Click">
+                                                    <MenuFlyoutItem Text="Copy Name" Click="CopyName_Click" Tag="{Binding}">
                                                         <MenuFlyoutItem.Icon>
                                                             <FontIcon Glyph="&#xE8C8;"/>
                                                         </MenuFlyoutItem.Icon>
                                                     </MenuFlyoutItem>
-                                                    <MenuFlyoutItem Text="Move to..." Click="Move_Click">
+                                                    <MenuFlyoutItem Text="Star" Click="Star_Click" Tag="{Binding}">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE734;"/>
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                                    <MenuFlyoutItem Text="Share" Click="Share_Click" Tag="{Binding}">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE72D;"/>
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                                    <MenuFlyoutItem Text="Stop Sharing" Click="StopSharing_Click" Tag="{Binding}">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE711;"/>
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                                    <MenuFlyoutSeparator/>
+                                                    <MenuFlyoutItem Text="Copy to..." Click="Copy_Click" Tag="{Binding}">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE8C8;"/>
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                                    <MenuFlyoutItem Text="Move to..." Click="Move_Click" Tag="{Binding}">
                                                         <MenuFlyoutItem.Icon>
                                                             <FontIcon Glyph="&#xE8DE;"/>
                                                         </MenuFlyoutItem.Icon>
                                                     </MenuFlyoutItem>
                                                     <MenuFlyoutSeparator/>
-                                                    <MenuFlyoutItem Text="Delete" Icon="Delete" Click="Delete_Click"/>
+                                                    <MenuFlyoutItem Text="Delete" Icon="Delete" Click="Delete_Click" Tag="{Binding}"/>
                                                 </MenuFlyout>
                                             </Button.Flyout>
                                         </Button>
@@ -347,6 +512,122 @@
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
+
+                        <!-- Grid View Mode -->
+                        <GridView x:Name="FilesGridView"
+                                  Visibility="Collapsed"
+                                  SelectionMode="Extended"
+                                  IsItemClickEnabled="True"
+                                  ItemClick="FileItem_Click"
+                                  SelectionChanged="FilesGridView_SelectionChanged"
+                                  Padding="12">
+                            <GridView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <ItemsWrapGrid Orientation="Horizontal" 
+                                                   ItemWidth="180" 
+                                                   ItemHeight="180"/>
+                                </ItemsPanelTemplate>
+                            </GridView.ItemsPanel>
+                            <GridView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="8"
+                                            Padding="12"
+                                            Width="160"
+                                            Height="160"
+                                            PointerEntered="FileRow_PointerEntered"
+                                            PointerExited="FileRow_PointerExited">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            
+                                            <!-- Large File Icon -->
+                                            <FontIcon Grid.Row="0" 
+                                                      Glyph="{Binding FileTypeIcon}" 
+                                                      FontSize="48"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                                            
+                                            <!-- Star indicator overlay -->
+                                            <FontIcon Grid.Row="0" 
+                                                      Glyph="&#xE735;" 
+                                                      FontSize="14"
+                                                      Foreground="#FFD700"
+                                                      HorizontalAlignment="Right"
+                                                      VerticalAlignment="Top"
+                                                      Visibility="{Binding Starred, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                            
+                                            <!-- File Name -->
+                                            <TextBlock Grid.Row="1" 
+                                                       Text="{Binding FileName}" 
+                                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       MaxLines="2"
+                                                       TextWrapping="Wrap"
+                                                       HorizontalAlignment="Center"
+                                                       TextAlignment="Center"
+                                                       Margin="0,8,0,4"/>
+                                            
+                                            <!-- File Size -->
+                                            <TextBlock Grid.Row="2" 
+                                                       Text="{Binding FileSizeFormatted}" 
+                                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                       HorizontalAlignment="Center"/>
+                                            
+                                            <!-- Context Menu Button -->
+                                            <Button Grid.Row="0"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Top"
+                                                    Padding="4"
+                                                    Margin="-4,-4,0,0"
+                                                    Tag="{Binding}"
+                                                    ToolTipService.ToolTip="More options">
+                                                <FontIcon Glyph="&#xE712;" FontSize="12"/>
+                                                <Button.Flyout>
+                                                    <MenuFlyout>
+                                                        <MenuFlyoutItem Text="Preview" Click="Preview_Click" Tag="{Binding}">
+                                                            <MenuFlyoutItem.Icon>
+                                                                <FontIcon Glyph="&#xE890;"/>
+                                                            </MenuFlyoutItem.Icon>
+                                                        </MenuFlyoutItem>
+                                                        <MenuFlyoutItem Text="Download" Icon="Download" Click="Download_Click" Tag="{Binding}"/>
+                                                        <MenuFlyoutItem Text="Rename" Click="Rename_Click" Tag="{Binding}">
+                                                            <MenuFlyoutItem.Icon>
+                                                                <FontIcon Glyph="&#xE8AC;"/>
+                                                            </MenuFlyoutItem.Icon>
+                                                        </MenuFlyoutItem>
+                                                        <MenuFlyoutItem Text="Copy Name" Click="CopyName_Click" Tag="{Binding}">
+                                                            <MenuFlyoutItem.Icon>
+                                                                <FontIcon Glyph="&#xE8C8;"/>
+                                                            </MenuFlyoutItem.Icon>
+                                                        </MenuFlyoutItem>
+                                                        <MenuFlyoutItem Text="Share" Click="Share_Click" Tag="{Binding}">
+                                                            <MenuFlyoutItem.Icon>
+                                                                <FontIcon Glyph="&#xE72D;"/>
+                                                            </MenuFlyoutItem.Icon>
+                                                        </MenuFlyoutItem>
+                                                        <MenuFlyoutItem Text="Stop Sharing" Click="StopSharing_Click" Tag="{Binding}">
+                                                            <MenuFlyoutItem.Icon>
+                                                                <FontIcon Glyph="&#xE711;"/>
+                                                            </MenuFlyoutItem.Icon>
+                                                        </MenuFlyoutItem>
+                                                        <MenuFlyoutSeparator/>
+                                                        <MenuFlyoutItem Text="Delete" Icon="Delete" Click="Delete_Click" Tag="{Binding}"/>
+                                                    </MenuFlyout>
+                                                </Button.Flyout>
+                                            </Button>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </GridView.ItemTemplate>
+                        </GridView>
                     </Grid>
 
                     <!-- Pagination -->

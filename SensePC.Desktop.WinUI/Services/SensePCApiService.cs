@@ -2043,8 +2043,11 @@ namespace SensePC.Desktop.WinUI.Services
                 var idToken = await GetIdTokenAsync();
                 var userId = await GetUserIdAsync();
                 
-                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
-                    return null;
+                if (string.IsNullOrEmpty(idToken))
+                    return new UploadUrlResponse { ErrorMessage = "Authentication failed: No ID token found" };
+                    
+                if (string.IsNullOrEmpty(userId))
+                    return new UploadUrlResponse { ErrorMessage = "Authentication failed: No user ID found" };
 
                 var payload = new
                 {
@@ -2055,7 +2058,7 @@ namespace SensePC.Desktop.WinUI.Services
                     size = fileSize.ToString(),
                     status = "private",
                     starred = false,
-                    folder = folder
+                    folder = folder ?? ""  // Send empty string instead of null
                 };
 
                 var json = JsonSerializer.Serialize(payload);
@@ -2066,10 +2069,16 @@ namespace SensePC.Desktop.WinUI.Services
                 request.Content = content;
 
                 var response = await _httpClient.SendAsync(request);
-                if (!response.IsSuccessStatusCode)
-                    return null;
-
+                
                 var responseContent = await response.Content.ReadAsStringAsync();
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorMsg = $"API Error ({response.StatusCode}): {responseContent}";
+                    System.Diagnostics.Debug.WriteLine($"GetUploadUrl failed: {errorMsg}");
+                    return new UploadUrlResponse { ErrorMessage = errorMsg };
+                }
+
                 return JsonSerializer.Deserialize<UploadUrlResponse>(responseContent, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
@@ -2077,8 +2086,9 @@ namespace SensePC.Desktop.WinUI.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"GetUploadUrl error: {ex.Message}");
-                return null;
+                var errorMsg = $"Exception: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"GetUploadUrl error: {errorMsg}");
+                return new UploadUrlResponse { ErrorMessage = errorMsg };
             }
         }
 
@@ -2536,6 +2546,63 @@ namespace SensePC.Desktop.WinUI.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"ShareFileViaEmail error: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Get share ID for a file
+        /// </summary>
+        public async Task<string?> GetShareIdForFileAsync(string key)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                if (string.IsNullOrEmpty(idToken))
+                    return null;
+
+                var request = new HttpRequestMessage(HttpMethod.Get, $"{ApiConfig.StorageBaseUrl}/shares?key={Uri.EscapeDataString(key)}");
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+
+                var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var content = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<SharesResponse>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                return result?.Items?.FirstOrDefault()?.ShareId;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetShareIdForFile error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Cancel/stop sharing a file
+        /// </summary>
+        public async Task<bool> CancelShareAsync(string shareId)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                if (string.IsNullOrEmpty(idToken))
+                    return false;
+
+                var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiConfig.StorageBaseUrl}/shares/{shareId}/cancel");
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+
+                var response = await _httpClient.SendAsync(request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"CancelShare error: {ex.Message}");
                 return false;
             }
         }

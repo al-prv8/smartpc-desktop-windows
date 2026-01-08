@@ -24,6 +24,11 @@ namespace SensePC.Desktop.WinUI.Views
         private string _sortBy = "date";
         private string _searchQuery = "";
         private bool _isLoading;
+        private bool _isGridView = false;
+        
+        // Activity tracking
+        private static readonly List<ActivityItem> _recentActivity = new();
+        private const int MaxActivityItems = 10;
 
         public StoragePage()
         {
@@ -168,6 +173,7 @@ namespace SensePC.Desktop.WinUI.Views
                 if (result?.Files?.Any() == true)
                 {
                     FilesListView.ItemsSource = result.Files;
+                    FilesGridView.ItemsSource = result.Files;
                     ShowFilesState();
 
                     // Update pagination
@@ -194,6 +200,7 @@ namespace SensePC.Desktop.WinUI.Views
             LoadingState.Visibility = Visibility.Visible;
             EmptyState.Visibility = Visibility.Collapsed;
             FilesListView.Visibility = Visibility.Collapsed;
+            FilesGridView.Visibility = Visibility.Collapsed;
             PaginationPanel.Visibility = Visibility.Collapsed;
         }
 
@@ -202,6 +209,7 @@ namespace SensePC.Desktop.WinUI.Views
             LoadingState.Visibility = Visibility.Collapsed;
             EmptyState.Visibility = Visibility.Visible;
             FilesListView.Visibility = Visibility.Collapsed;
+            FilesGridView.Visibility = Visibility.Collapsed;
             PaginationPanel.Visibility = Visibility.Collapsed;
         }
 
@@ -209,7 +217,10 @@ namespace SensePC.Desktop.WinUI.Views
         {
             LoadingState.Visibility = Visibility.Collapsed;
             EmptyState.Visibility = Visibility.Collapsed;
-            FilesListView.Visibility = Visibility.Visible;
+            
+            // Show the appropriate view based on mode
+            FilesListView.Visibility = _isGridView ? Visibility.Collapsed : Visibility.Visible;
+            FilesGridView.Visibility = _isGridView ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void UpdatePagination()
@@ -241,6 +252,43 @@ namespace SensePC.Desktop.WinUI.Views
                 
                 UpdateCategorySelection();
                 _ = LoadFilesAsync();
+            }
+        }
+
+        private void ViewToggle_Click(object sender, RoutedEventArgs e)
+        {
+            _isGridView = ViewToggleButton.IsChecked == true;
+            
+            // Update icon: Grid icon when in list mode (showing what it will switch to), List icon when in grid mode
+            ViewToggleIcon.Glyph = _isGridView ? "\uE8FD" : "\uF0E2"; // List icon vs Grid icon
+            
+            // Toggle visibility
+            ShowFilesState();
+            
+            // Sync the data source between views
+            if (_isGridView)
+            {
+                FilesGridView.ItemsSource = FilesListView.ItemsSource;
+            }
+        }
+
+        private void FilesGridView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var selectedCount = FilesGridView.SelectedItems.Count;
+            if (selectedCount > 0)
+            {
+                BulkDownloadButton.Visibility = Visibility.Visible;
+                BulkDownloadText.Text = $"Download ({selectedCount})";
+                BulkShareButton.Visibility = Visibility.Visible;
+                BulkShareText.Text = $"Share ({selectedCount})";
+                BulkDeleteButton.Visibility = Visibility.Visible;
+                BulkDeleteText.Text = $"Delete ({selectedCount})";
+            }
+            else
+            {
+                BulkDownloadButton.Visibility = Visibility.Collapsed;
+                BulkShareButton.Visibility = Visibility.Collapsed;
+                BulkDeleteButton.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -366,11 +414,6 @@ namespace SensePC.Desktop.WinUI.Views
             }
         }
 
-        private void ViewToggle_Click(object sender, RoutedEventArgs e)
-        {
-            // Note: Grid view toggle not implemented in current XAML layout
-        }
-
         private void Refresh_Click(object sender, RoutedEventArgs e)
         {
             _ = LoadStorageDataAsync();
@@ -482,10 +525,7 @@ namespace SensePC.Desktop.WinUI.Views
 
         private async void Download_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is MenuFlyoutItem menuItem && 
-                menuItem.Parent is MenuFlyout flyout &&
-                flyout.Target is Button button &&
-                button.Tag is StorageItem item)
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is StorageItem item)
             {
                 if (item.IsFolder)
                 {
@@ -521,22 +561,186 @@ namespace SensePC.Desktop.WinUI.Views
 
         private async void Star_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is MenuFlyoutItem menuItem && 
-                menuItem.Parent is MenuFlyout flyout &&
-                flyout.Target is Button button &&
-                button.Tag is StorageItem item)
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is StorageItem item)
             {
                 await _apiService.ToggleStarAsync(item.Id, !item.Starred);
                 await LoadFilesAsync();
             }
         }
 
+        private void CopyName_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is StorageItem item)
+            {
+                var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
+                dataPackage.SetText(item.FileName);
+                Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
+                
+                // Show a brief tooltip or notification would be nice, but for now just copy silently
+            }
+        }
+
+        private async void Preview_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is StorageItem item)
+            {
+                // Check if it's a folder
+                if (item.IsFolder)
+                {
+                    var folderDialog = new ContentDialog
+                    {
+                        Title = "Cannot Preview Folder",
+                        Content = "Folders cannot be previewed. Double-click to open the folder instead.",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await folderDialog.ShowAsync();
+                    return;
+                }
+
+                // Get download URL and show preview
+                var downloadUrl = await _apiService.GetDownloadUrlAsync(item.FileName, _currentFolder, item.Id);
+                
+                if (string.IsNullOrEmpty(downloadUrl))
+                {
+                    var errorDialog = new ContentDialog
+                    {
+                        Title = "Preview Failed",
+                        Content = "Could not generate preview URL. Please try again.",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await errorDialog.ShowAsync();
+                    return;
+                }
+
+                // Create preview content based on file type
+                object previewContent;
+                var fileExt = System.IO.Path.GetExtension(item.FileName).ToLower();
+                var isImage = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" }.Contains(fileExt);
+                
+                if (isImage)
+                {
+                    // Image preview
+                    var image = new Microsoft.UI.Xaml.Controls.Image
+                    {
+                        Source = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri(downloadUrl)),
+                        MaxWidth = 600,
+                        MaxHeight = 400,
+                        Stretch = Microsoft.UI.Xaml.Media.Stretch.Uniform
+                    };
+                    previewContent = new ScrollViewer
+                    {
+                        Content = image,
+                        HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+                        VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+                    };
+                }
+                else
+                {
+                    // For non-image files, show file info and offer to download
+                    previewContent = new StackPanel
+                    {
+                        Spacing = 16,
+                        Children =
+                        {
+                            new FontIcon
+                            {
+                                Glyph = item.FileTypeIcon,
+                                FontSize = 64,
+                                HorizontalAlignment = HorizontalAlignment.Center,
+                                Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["AccentFillColorDefaultBrush"]
+                            },
+                            new TextBlock { Text = item.FileName, HorizontalAlignment = HorizontalAlignment.Center, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
+                            new TextBlock { Text = $"Size: {item.DisplaySize}", HorizontalAlignment = HorizontalAlignment.Center, Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["TextFillColorSecondaryBrush"] },
+                            new TextBlock { Text = $"Modified: {item.DisplayDate}", HorizontalAlignment = HorizontalAlignment.Center, Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["TextFillColorSecondaryBrush"] },
+                            new TextBlock { Text = "This file type cannot be previewed directly. Click Download to view.", TextWrapping = TextWrapping.Wrap, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 16, 0, 0) }
+                        }
+                    };
+                }
+
+                var previewDialog = new ContentDialog
+                {
+                    Title = $"Preview: {item.FileName}",
+                    Content = previewContent,
+                    PrimaryButtonText = "Download",
+                    CloseButtonText = "Close",
+                    XamlRoot = this.XamlRoot
+                };
+
+                if (await previewDialog.ShowAsync() == ContentDialogResult.Primary)
+                {
+                    // Download the file
+                    await Windows.System.Launcher.LaunchUriAsync(new Uri(downloadUrl));
+                }
+            }
+        }
+
+        private async void StopSharing_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is StorageItem item)
+            {
+                // First, get the share ID for this file
+                var shareId = await _apiService.GetShareIdForFileAsync(item.Id);
+                
+                if (string.IsNullOrEmpty(shareId))
+                {
+                    var noShareDialog = new ContentDialog
+                    {
+                        Title = "Not Shared",
+                        Content = $"\"{item.FileName}\" is not currently shared.",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await noShareDialog.ShowAsync();
+                    return;
+                }
+
+                // Confirm stop sharing
+                var confirmDialog = new ContentDialog
+                {
+                    Title = "Stop Sharing",
+                    Content = $"Are you sure you want to stop sharing \"{item.FileName}\"? Anyone with the share link will no longer be able to access this file.",
+                    PrimaryButtonText = "Stop Sharing",
+                    CloseButtonText = "Cancel",
+                    DefaultButton = ContentDialogButton.Close,
+                    XamlRoot = this.XamlRoot
+                };
+
+                if (await confirmDialog.ShowAsync() == ContentDialogResult.Primary)
+                {
+                    var success = await _apiService.CancelShareAsync(shareId);
+                    
+                    if (success)
+                    {
+                        var successDialog = new ContentDialog
+                        {
+                            Title = "Sharing Stopped",
+                            Content = $"\"{item.FileName}\" is no longer shared.",
+                            CloseButtonText = "OK",
+                            XamlRoot = this.XamlRoot
+                        };
+                        await successDialog.ShowAsync();
+                        await LoadFilesAsync();
+                    }
+                    else
+                    {
+                        var errorDialog = new ContentDialog
+                        {
+                            Title = "Error",
+                            Content = "Failed to stop sharing. Please try again.",
+                            CloseButtonText = "OK",
+                            XamlRoot = this.XamlRoot
+                        };
+                        await errorDialog.ShowAsync();
+                    }
+                }
+            }
+        }
+
         private async void Delete_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is MenuFlyoutItem menuItem && 
-                menuItem.Parent is MenuFlyout flyout &&
-                flyout.Target is Button button &&
-                button.Tag is StorageItem item)
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is StorageItem item)
             {
                 var dialog = new ContentDialog
                 {
@@ -558,10 +762,7 @@ namespace SensePC.Desktop.WinUI.Views
 
         private async void Share_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is MenuFlyoutItem menuItem && 
-                menuItem.Parent is MenuFlyout flyout &&
-                flyout.Target is Button button &&
-                button.Tag is StorageItem item)
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is StorageItem item)
             {
                 var dialog = new Dialogs.ShareDialog(item, this.XamlRoot, _currentFolder);
                 await dialog.ShowAsync();
@@ -575,10 +776,7 @@ namespace SensePC.Desktop.WinUI.Views
 
         private async void Rename_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is MenuFlyoutItem menuItem && 
-                menuItem.Parent is MenuFlyout flyout &&
-                flyout.Target is Button button &&
-                button.Tag is StorageItem item)
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is StorageItem item)
             {
                 var input = new TextBox
                 {
@@ -626,10 +824,7 @@ namespace SensePC.Desktop.WinUI.Views
 
         private async void Copy_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is MenuFlyoutItem menuItem && 
-                menuItem.Parent is MenuFlyout flyout &&
-                flyout.Target is Button button &&
-                button.Tag is StorageItem item)
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is StorageItem item)
             {
                 var input = new TextBox
                 {
@@ -681,10 +876,7 @@ namespace SensePC.Desktop.WinUI.Views
 
         private async void Move_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is MenuFlyoutItem menuItem && 
-                menuItem.Parent is MenuFlyout flyout &&
-                flyout.Target is Button button &&
-                button.Tag is StorageItem item)
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is StorageItem item)
             {
                 var input = new TextBox
                 {
@@ -859,19 +1051,253 @@ namespace SensePC.Desktop.WinUI.Views
             var selectedCount = FilesListView.SelectedItems.Count;
             if (selectedCount > 0)
             {
+                BulkDownloadButton.Visibility = Visibility.Visible;
+                BulkDownloadText.Text = $"Download ({selectedCount})";
+                BulkShareButton.Visibility = Visibility.Visible;
+                BulkShareText.Text = $"Share ({selectedCount})";
                 BulkDeleteButton.Visibility = Visibility.Visible;
                 BulkDeleteText.Text = $"Delete ({selectedCount})";
             }
             else
             {
+                BulkDownloadButton.Visibility = Visibility.Collapsed;
+                BulkShareButton.Visibility = Visibility.Collapsed;
                 BulkDeleteButton.Visibility = Visibility.Collapsed;
                 BulkDeleteText.Text = "Delete";
             }
         }
 
+        private async void BulkDownload_Click(object sender, RoutedEventArgs e)
+        {
+            // Get selected items from whichever view is active
+            var selectedItems = _isGridView 
+                ? FilesGridView.SelectedItems.Cast<StorageItem>().ToList()
+                : FilesListView.SelectedItems.Cast<StorageItem>().ToList();
+            
+            if (selectedItems.Count == 0) return;
+
+            // Filter out folders - only download files
+            var filesToDownload = selectedItems.Where(f => !f.IsFolder).ToList();
+            
+            if (filesToDownload.Count == 0)
+            {
+                var noFilesDialog = new ContentDialog
+                {
+                    Title = "No Files Selected",
+                    Content = "Only files can be downloaded. Folders are not supported for bulk download.",
+                    CloseButtonText = "OK",
+                    XamlRoot = this.XamlRoot
+                };
+                await noFilesDialog.ShowAsync();
+                return;
+            }
+
+            if (filesToDownload.Count != selectedItems.Count)
+            {
+                // Some folders were filtered out
+                var warningDialog = new ContentDialog
+                {
+                    Title = "Folders Skipped",
+                    Content = $"{selectedItems.Count - filesToDownload.Count} folder(s) will be skipped. Only {filesToDownload.Count} file(s) will be downloaded.",
+                    PrimaryButtonText = "Continue",
+                    CloseButtonText = "Cancel",
+                    XamlRoot = this.XamlRoot
+                };
+                
+                if (await warningDialog.ShowAsync() != ContentDialogResult.Primary)
+                    return;
+            }
+
+            var progressText = new TextBlock { Text = $"Downloading 0/{filesToDownload.Count}...", HorizontalAlignment = HorizontalAlignment.Center };
+            var progressDialog = new ContentDialog
+            {
+                Title = "Downloading Files",
+                Content = new StackPanel
+                {
+                    Spacing = 16,
+                    Children =
+                    {
+                        new ProgressRing { IsActive = true, Width = 40, Height = 40 },
+                        progressText
+                    }
+                },
+                XamlRoot = this.XamlRoot
+            };
+
+            _ = progressDialog.ShowAsync();
+
+            int downloaded = 0;
+            foreach (var file in filesToDownload)
+            {
+                try
+                {
+                    var downloadUrl = await _apiService.GetDownloadUrlAsync(file.FileName, _currentFolder, file.Id);
+                    if (!string.IsNullOrEmpty(downloadUrl))
+                    {
+                        await Windows.System.Launcher.LaunchUriAsync(new Uri(downloadUrl));
+                        downloaded++;
+                        progressText.Text = $"Downloading {downloaded}/{filesToDownload.Count}...";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Download error: {ex.Message}");
+                }
+                
+                // Small delay between downloads to prevent overwhelming the browser
+                await Task.Delay(500);
+            }
+
+            progressDialog.Hide();
+
+            // Show completion message
+            var completionDialog = new ContentDialog
+            {
+                Title = "Download Complete",
+                Content = $"Successfully started download for {downloaded} of {filesToDownload.Count} file(s).",
+                CloseButtonText = "OK",
+                XamlRoot = this.XamlRoot
+            };
+            await completionDialog.ShowAsync();
+        }
+
+        private async void BulkShare_Click(object sender, RoutedEventArgs e)
+        {
+            // Get selected items from whichever view is active
+            var selectedItems = _isGridView 
+                ? FilesGridView.SelectedItems.Cast<StorageItem>().ToList()
+                : FilesListView.SelectedItems.Cast<StorageItem>().ToList();
+            
+            if (selectedItems.Count == 0) return;
+
+            // Filter out folders - only share files
+            var filesToShare = selectedItems.Where(f => !f.IsFolder).ToList();
+            
+            if (filesToShare.Count == 0)
+            {
+                var noFilesDialog = new ContentDialog
+                {
+                    Title = "No Files Selected",
+                    Content = "Only files can be shared. Folders are not supported for bulk share.",
+                    CloseButtonText = "OK",
+                    XamlRoot = this.XamlRoot
+                };
+                await noFilesDialog.ShowAsync();
+                return;
+            }
+
+            if (filesToShare.Count != selectedItems.Count)
+            {
+                // Some folders were filtered out
+                var warningDialog = new ContentDialog
+                {
+                    Title = "Folders Skipped",
+                    Content = $"{selectedItems.Count - filesToShare.Count} folder(s) will be skipped. Only {filesToShare.Count} file(s) will be shared.",
+                    PrimaryButtonText = "Continue",
+                    CloseButtonText = "Cancel",
+                    XamlRoot = this.XamlRoot
+                };
+                
+                if (await warningDialog.ShowAsync() != ContentDialogResult.Primary)
+                    return;
+            }
+
+            // Show progress dialog
+            var progressText = new TextBlock { Text = $"Generating share links...", HorizontalAlignment = HorizontalAlignment.Center };
+            var progressDialog = new ContentDialog
+            {
+                Title = "Sharing Files",
+                Content = new StackPanel
+                {
+                    Spacing = 16,
+                    Children =
+                    {
+                        new ProgressRing { IsActive = true, Width = 40, Height = 40 },
+                        progressText
+                    }
+                },
+                XamlRoot = this.XamlRoot
+            };
+
+            _ = progressDialog.ShowAsync();
+
+            var shareLinks = new List<string>();
+            int shared = 0;
+            
+            foreach (var file in filesToShare)
+            {
+                try
+                {
+                    progressText.Text = $"Sharing {shared + 1}/{filesToShare.Count}...";
+                    var shareUrl = await _apiService.GenerateShareLinkAsync(file.FileName, _currentFolder, file.Id);
+                    if (!string.IsNullOrEmpty(shareUrl))
+                    {
+                        shareLinks.Add($"{file.FileName}: {shareUrl}");
+                        shared++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Share error: {ex.Message}");
+                }
+            }
+
+            progressDialog.Hide();
+
+            if (shareLinks.Count > 0)
+            {
+                // Copy all share links to clipboard
+                var allLinks = string.Join("\n", shareLinks);
+                var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
+                dataPackage.SetText(allLinks);
+                Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
+
+                // Show completion message with links
+                var linksTextBlock = new TextBlock
+                {
+                    Text = allLinks,
+                    TextWrapping = TextWrapping.Wrap,
+                    IsTextSelectionEnabled = true,
+                    MaxWidth = 400
+                };
+
+                var completionDialog = new ContentDialog
+                {
+                    Title = "Share Links Generated",
+                    Content = new StackPanel
+                    {
+                        Spacing = 12,
+                        Children =
+                        {
+                            new TextBlock { Text = $"Successfully generated {shared} share link(s). Links copied to clipboard!" },
+                            new ScrollViewer { Content = linksTextBlock, MaxHeight = 200 }
+                        }
+                    },
+                    CloseButtonText = "OK",
+                    XamlRoot = this.XamlRoot
+                };
+                await completionDialog.ShowAsync();
+            }
+            else
+            {
+                var errorDialog = new ContentDialog
+                {
+                    Title = "Share Failed",
+                    Content = "Failed to generate share links. Please try again.",
+                    CloseButtonText = "OK",
+                    XamlRoot = this.XamlRoot
+                };
+                await errorDialog.ShowAsync();
+            }
+        }
+
         private async void BulkDelete_Click(object sender, RoutedEventArgs e)
         {
-            var selectedItems = FilesListView.SelectedItems.Cast<StorageItem>().ToList();
+            // Get selected items from whichever view is active
+            var selectedItems = _isGridView 
+                ? FilesGridView.SelectedItems.Cast<StorageItem>().ToList()
+                : FilesListView.SelectedItems.Cast<StorageItem>().ToList();
+            
             if (selectedItems.Count == 0) return;
 
             var dialog = new ContentDialog
@@ -914,9 +1340,182 @@ namespace SensePC.Desktop.WinUI.Views
 
                 // Refresh file list
                 await LoadFilesAsync();
+                
+                // Add activity
+                AddActivity("Deleted", $"{deleted} file(s)", "&#xE74D;");
             }
         }
 
         #endregion
+
+        #region Activity Tracking
+
+        private void AddActivity(string action, string target, string iconGlyph)
+        {
+            var activity = new ActivityItem
+            {
+                Action = action,
+                Target = target,
+                IconGlyph = iconGlyph,
+                Timestamp = DateTime.Now
+            };
+
+            _recentActivity.Insert(0, activity);
+            
+            // Keep only the most recent items
+            while (_recentActivity.Count > MaxActivityItems)
+            {
+                _recentActivity.RemoveAt(_recentActivity.Count - 1);
+            }
+
+            UpdateActivityUI();
+        }
+
+        private void RefreshActivity_Click(object sender, RoutedEventArgs e)
+        {
+            UpdateActivityUI();
+        }
+
+        private void UpdateActivityUI()
+        {
+            ActivityListPanel.Children.Clear();
+
+            if (_recentActivity.Count == 0)
+            {
+                ActivityEmptyText.Visibility = Visibility.Visible;
+                return;
+            }
+
+            ActivityEmptyText.Visibility = Visibility.Collapsed;
+
+            foreach (var activity in _recentActivity.Take(10))
+            {
+                var activityItem = new Border
+                {
+                    Padding = new Thickness(8),
+                    CornerRadius = new CornerRadius(4),
+                    Background = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["CardBackgroundFillColorSecondaryBrush"],
+                    Child = new Grid
+                    {
+                        ColumnDefinitions =
+                        {
+                            new ColumnDefinition { Width = new GridLength(24) },
+                            new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
+                        },
+                        Children =
+                        {
+                            new FontIcon
+                            {
+                                Glyph = activity.IconGlyph,
+                                FontSize = 12,
+                                Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["AccentFillColorDefaultBrush"],
+                                VerticalAlignment = VerticalAlignment.Center
+                            },
+                            CreateActivityContent(activity)
+                        }
+                    }
+                };
+
+                ActivityListPanel.Children.Add(activityItem);
+            }
+        }
+
+        private static StackPanel CreateActivityContent(ActivityItem activity)
+        {
+            var panel = new StackPanel { Spacing = 2 };
+            Grid.SetColumn(panel, 1);
+            
+            panel.Children.Add(new TextBlock
+            {
+                Text = $"{activity.Action}: {activity.Target}",
+                FontSize = 11,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                MaxWidth = 160
+            });
+            
+            panel.Children.Add(new TextBlock
+            {
+                Text = activity.Timestamp.ToString("h:mm tt"),
+                FontSize = 10,
+                Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["TextFillColorTertiaryBrush"]
+            });
+
+            return panel;
+        }
+
+        #endregion
+
+        #region Cloud Storage Connections
+
+        private async void ConnectDropbox_Click(object sender, RoutedEventArgs e)
+        {
+            await ShowComingSoonDialog("Dropbox", "Sync your SensePC Cloud with Dropbox for seamless file access across all your devices.");
+        }
+
+        private async void ConnectGoogleDrive_Click(object sender, RoutedEventArgs e)
+        {
+            await ShowComingSoonDialog("Google Drive", "Connect your Google Drive to access and sync files directly from SensePC Cloud.");
+        }
+
+        private async void ConnectiCloud_Click(object sender, RoutedEventArgs e)
+        {
+            await ShowComingSoonDialog("iCloud Drive", "Integrate with iCloud Drive to keep your files synchronized across your Apple ecosystem.");
+        }
+
+        private async Task ShowComingSoonDialog(string serviceName, string description)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = $"{serviceName} Integration",
+                Content = new StackPanel
+                {
+                    Spacing = 12,
+                    Children =
+                    {
+                        new TextBlock 
+                        { 
+                            Text = description, 
+                            TextWrapping = TextWrapping.Wrap 
+                        },
+                        new Border
+                        {
+                            Background = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["AccentFillColorDefaultBrush"],
+                            CornerRadius = new CornerRadius(4),
+                            Padding = new Thickness(12, 8, 12, 8),
+                            Child = new TextBlock 
+                            { 
+                                Text = "Coming Soon!", 
+                                HorizontalAlignment = HorizontalAlignment.Center,
+                                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                                Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White)
+                            }
+                        },
+                        new TextBlock
+                        {
+                            Text = "We're working hard to bring you cloud storage integrations. Stay tuned for updates!",
+                            TextWrapping = TextWrapping.Wrap,
+                            FontSize = 12,
+                            Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
+                        }
+                    }
+                },
+                CloseButtonText = "OK",
+                XamlRoot = this.XamlRoot
+            };
+            await dialog.ShowAsync();
+        }
+
+        #endregion
+    }
+
+    /// <summary>
+    /// Represents a recent activity item
+    /// </summary>
+    public class ActivityItem
+    {
+        public string Action { get; set; } = "";
+        public string Target { get; set; } = "";
+        public string IconGlyph { get; set; } = "\xE7C3";
+        public DateTime Timestamp { get; set; }
     }
 }

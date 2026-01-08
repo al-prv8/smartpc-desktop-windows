@@ -143,6 +143,9 @@ namespace SensePC.Desktop.WinUI.Models
 
         [JsonPropertyName("key")]
         public string? Key { get; set; }
+        
+        // For error handling
+        public string? ErrorMessage { get; set; }
     }
 
     /// <summary>
@@ -209,5 +212,23 @@ namespace SensePC.Desktop.WinUI.Models
 
         [JsonPropertyName("expiresAt")]
         public string? ExpiresAt { get; set; }
+    }
+
+    /// <summary>
+    /// Shares query response
+    /// </summary>
+    public class SharesResponse
+    {
+        [JsonPropertyName("items")]
+        public List<ShareInfo>? Items { get; set; }
+    }
+
+    /// <summary>
+    /// Individual share info
+    /// </summary>
+    public class ShareInfo
+    {
+        [JsonPropertyName("shareId")]
+        public string ShareId { get; set; } = "";
     }
 }

@@ -299,9 +299,21 @@ namespace SensePC.Desktop.WinUI.Views.Dialogs
                             _currentFolder
                         );
 
-                        if (uploadResponse == null || string.IsNullOrEmpty(uploadResponse.UploadUrl))
+                        if (uploadResponse == null)
                         {
-                            errors.Add($"{fileItem.FileName}: Failed to get upload URL");
+                            errors.Add($"{fileItem.FileName}: No response from server");
+                            continue;
+                        }
+
+                        if (!string.IsNullOrEmpty(uploadResponse.ErrorMessage))
+                        {
+                            errors.Add($"{fileItem.FileName}: {uploadResponse.ErrorMessage}");
+                            continue;
+                        }
+
+                        if (string.IsNullOrEmpty(uploadResponse.UploadUrl))
+                        {
+                            errors.Add($"{fileItem.FileName}: No upload URL in response");
                             continue;
                         }
 
