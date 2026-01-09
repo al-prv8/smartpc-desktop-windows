@@ -617,31 +617,278 @@ namespace SensePC.Desktop.WinUI.Views
         {
             if (sender is Button btn && btn.Tag is PCInstance pc)
             {
+                if (!pc.IsRunning)
+                {
+                    var dialog = new ContentDialog
+                    {
+                        Title = "PC Not Running",
+                        Content = "Please start the PC first before connecting.",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await dialog.ShowAsync();
+                    return;
+                }
+
                 btn.IsEnabled = false;
                 try
                 {
+                    // Launch session to get token
                     var session = await _apiService.LaunchSessionAsync(pc.InstanceId);
-                    if (!string.IsNullOrEmpty(session.DcvUrl))
+                    
+                    System.Diagnostics.Debug.WriteLine("=== Opening DCV Session ===");
+                    System.Diagnostics.Debug.WriteLine($"PC: {pc.SystemName}");
+                    System.Diagnostics.Debug.WriteLine($"DnsName: {session?.DnsName ?? "NULL"}");
+                    System.Diagnostics.Debug.WriteLine($"SessionId: {session?.SessionId ?? "NULL"}");
+                    
+                    // Get the token
+                    var token = session?.SessionToken ?? session?.AuthToken ?? "";
+                    var dnsName = session?.DnsName ?? "";
+                    var sessionId = session?.SessionId ?? "";
+
+                    // Use MainWindow's session management instead of navigating to DCVSessionsPage
+                    var mainWindow = App.MainWindow as MainWindow;
+
+                    if (mainWindow != null)
                     {
-                        // Open DCV URL
-                        await Windows.System.Launcher.LaunchUriAsync(new Uri(session.DcvUrl));
+                        await mainWindow.AddSessionAsync(
+                            pc.InstanceId,
+                            pc.SystemName,
+                            dnsName,
+                            token,
+                            sessionId
+                        );
                     }
-                    else if (!string.IsNullOrEmpty(pc.DcvUrl))
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Connect error: {ex.Message}");
+                    var dialog = new ContentDialog
                     {
-                        await Windows.System.Launcher.LaunchUriAsync(new Uri(pc.DcvUrl));
-                    }
-                    else
-                    {
-                        // Fallback to web viewer
-                        var encodedSession = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(pc.InstanceId));
-                        await Windows.System.Launcher.LaunchUriAsync(
-                            new Uri($"https://smartpc.cloud/pc-viewer?session={encodedSession}"));
-                    }
+                        Title = "Connection Error",
+                        Content = $"Failed to connect: {ex.Message}",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await dialog.ShowAsync();
                 }
                 finally
                 {
                     btn.IsEnabled = true;
                 }
+            }
+        }
+
+
+        /// <summary>
+
+        /// Attempts direct DCV connection via public IP address
+        /// </summary>
+        private async Task<(bool success, string errorMessage)> LaunchNativeDCVClientDirect(string publicIp, string? sessionId, string token)
+        {
+            try
+            {
+                // Find DCV client
+                var possiblePaths = new[]
+                {
+                    @"C:\Program Files\NICE\DCV\Client\bin\dcvviewer.exe",
+                    @"C:\Program Files (x86)\NICE\DCV\Client\bin\dcvviewer.exe"
+                };
+
+                string? dcvClientPath = null;
+                foreach (var path in possiblePaths)
+                {
+                    if (System.IO.File.Exists(path))
+                    {
+                        dcvClientPath = path;
+                        break;
+                    }
+                }
+
+                if (dcvClientPath == null)
+                {
+                    return (false, "DCV client not installed");
+                }
+
+                // Try different connection formats
+                var dcvSessionId = sessionId ?? "console";
+                
+                // Try port 443 first (HTTPS), then 8443 (default DCV)
+                var ports = new[] { 443, 8443 };
+                
+                foreach (var port in ports)
+                {
+                    // Format: hostname:port#session-id --auth-token=TOKEN
+                    var server = port == 443 ? publicIp : $"{publicIp}:{port}";
+                    var connectionString = $"{server}#{dcvSessionId}";
+                    var arguments = $"{connectionString} --auth-token={token}";
+                    
+                    System.Diagnostics.Debug.WriteLine($"Trying DCV connection: {server}#{dcvSessionId}");
+                    
+                    var startInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = dcvClientPath,
+                        Arguments = arguments,
+                        UseShellExecute = true,
+                        CreateNoWindow = false
+                    };
+
+                    var process = System.Diagnostics.Process.Start(startInfo);
+                    
+                    if (process != null)
+                    {
+                        await Task.Delay(1000); // Give it more time to connect
+                        
+                        if (!process.HasExited)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"DCV connected successfully on port {port}");
+                            return (true, "");
+                        }
+                        
+                        System.Diagnostics.Debug.WriteLine($"DCV client exited on port {port} with code: {process.ExitCode}");
+                    }
+                }
+
+                return (false, "Failed to connect on all ports");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Direct DCV connection error: {ex.Message}");
+                return (false, $"Error: {ex.Message}");
+            }
+        }
+
+
+        /// <summary>
+        /// Attempts to launch the native NICE DCV client application
+        /// Returns (success, errorMessage)
+        /// </summary>
+        private async Task<(bool success, string errorMessage)> LaunchNativeDCVClient(string dcvUrl)
+        {
+            return await LaunchNativeDCVClientWithResponse(new Models.SessionLaunchResponse { DcvUrl = dcvUrl });
+        }
+
+        /// <summary>
+        /// Launches native DCV client with full session response containing all connection details
+        /// </summary>
+        private async Task<(bool success, string errorMessage)> LaunchNativeDCVClientWithResponse(Models.SessionLaunchResponse session)
+        {
+            try
+            {
+                // Common DCV client installation paths
+                var possiblePaths = new[]
+                {
+                    @"C:\Program Files\NICE\DCV\Client\bin\dcvviewer.exe",
+                    @"C:\Program Files (x86)\NICE\DCV\Client\bin\dcvviewer.exe",
+                    Environment.ExpandEnvironmentVariables(@"%ProgramFiles%\NICE\DCV\Client\bin\dcvviewer.exe"),
+                    Environment.ExpandEnvironmentVariables(@"%ProgramFiles(x86)%\NICE\DCV\Client\bin\dcvviewer.exe")
+                };
+
+                string? dcvClientPath = null;
+                foreach (var path in possiblePaths)
+                {
+                    if (System.IO.File.Exists(path))
+                    {
+                        dcvClientPath = path;
+                        System.Diagnostics.Debug.WriteLine($"Found DCV client at: {path}");
+                        break;
+                    }
+                }
+
+                if (dcvClientPath == null)
+                {
+                    return (false, "DCV client not installed");
+                }
+
+                // Build proper DCV connection arguments
+                // Use SessionToken (preferred) or AuthToken as fallback
+                var token = session.SessionToken ?? session.AuthToken;
+                
+                if (!string.IsNullOrEmpty(session.DnsName) && !string.IsNullOrEmpty(token))
+                {
+                    // DCV native client format: dcvviewer.exe hostname#session-id --auth-token=TOKEN
+                    var sessionId = session.SessionId ?? "console";
+                    var server = $"{session.DnsName}#{sessionId}";
+                    var arguments = $"{server} --auth-token={token}";
+                    
+                    System.Diagnostics.Debug.WriteLine($"DCV Connection: Server={server}");
+                    System.Diagnostics.Debug.WriteLine($"DCV Token: {token.Substring(0, Math.Min(20, token.Length))}...");
+                    
+                    var startInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = dcvClientPath,
+                        Arguments = arguments,
+                        UseShellExecute = true,
+                        CreateNoWindow = false
+                    };
+
+                    System.Diagnostics.Debug.WriteLine($"Launching: {dcvClientPath} {arguments}");
+                    
+                    var process = System.Diagnostics.Process.Start(startInfo);
+                    
+                    if (process == null)
+                    {
+                        return (false, "Failed to start DCV client process");
+                    }
+
+                    // Wait a moment to check if process stays alive
+                    await Task.Delay(500);
+                    
+                    if (process.HasExited)
+                    {
+                        return (false, $"DCV client exited immediately (exit code: {process.ExitCode})");
+                    }
+
+                    System.Diagnostics.Debug.WriteLine("DCV client launched successfully");
+                    return (true, "");
+                }
+                else if (!string.IsNullOrEmpty(session.GatewayUrl))
+                {
+                    // Try gateway URL as fallback
+                    var startInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = dcvClientPath,
+                        Arguments = $"\"{session.GatewayUrl}\"",
+                        UseShellExecute = true
+                    };
+                    
+                    var process = System.Diagnostics.Process.Start(startInfo);
+                    if (process != null)
+                    {
+                        await Task.Delay(500);
+                        if (!process.HasExited)
+                            return (true, "");
+                    }
+                    return (false, "Gateway URL connection failed");
+                }
+                else if (!string.IsNullOrEmpty(session.DcvUrl))
+                {
+                    // Fallback to dcvUrl
+                    var startInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = dcvClientPath,
+                        Arguments = $"\"{session.DcvUrl}\"",
+                        UseShellExecute = true
+                    };
+                    
+                    var process = System.Diagnostics.Process.Start(startInfo);
+                    if (process != null)
+                    {
+                        await Task.Delay(500);
+                        if (!process.HasExited)
+                            return (true, "");
+                    }
+                    return (false, "DcvUrl connection failed");
+                }
+                else
+                {
+                    return (false, "No connection URL available from API");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DCV client error: {ex.Message}");
+                return (false, $"Error: {ex.Message}");
             }
         }
 

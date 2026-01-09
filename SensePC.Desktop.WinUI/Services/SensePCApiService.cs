@@ -1394,6 +1394,92 @@ namespace SensePC.Desktop.WinUI.Services
         }
 
         /// <summary>
+        /// Get promotional credits eligibility and balances
+        /// </summary>
+        public async Task<PromoInfo?> GetPromoInfoAsync()
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                if (string.IsNullOrEmpty(idToken))
+                {
+                    return null;
+                }
+
+                using var request = new HttpRequestMessage(HttpMethod.Get, ApiConfig.PromoUrl);
+                request.Headers.Add("Authorization", idToken);
+
+                var response = await _httpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<PromoInfo>(content);
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetPromoInfo error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Redeem promotional credits
+        /// </summary>
+        public async Task<PromoRedeemResult> RedeemPromoAsync()
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                if (string.IsNullOrEmpty(idToken))
+                {
+                    return new PromoRedeemResult { Success = false, ErrorMessage = "Not authenticated" };
+                }
+
+                using var request = new HttpRequestMessage(HttpMethod.Post, ApiConfig.PromoUrl);
+                request.Headers.Add("Authorization", idToken);
+                request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.SendAsync(request);
+                var content = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = JsonSerializer.Deserialize<PromoRedeemResult>(content);
+                    if (result != null)
+                    {
+                        result.Success = true;
+                        return result;
+                    }
+                    return new PromoRedeemResult { Success = true };
+                }
+                else
+                {
+                    // Try to parse error message
+                    try
+                    {
+                        var errorObj = JsonSerializer.Deserialize<Dictionary<string, string>>(content);
+                        return new PromoRedeemResult 
+                        { 
+                            Success = false, 
+                            ErrorMessage = errorObj?.GetValueOrDefault("message") ?? "Failed to redeem promo" 
+                        };
+                    }
+                    catch
+                    {
+                        return new PromoRedeemResult { Success = false, ErrorMessage = "Failed to redeem promo" };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"RedeemPromo error: {ex.Message}");
+                return new PromoRedeemResult { Success = false, ErrorMessage = ex.Message };
+            }
+        }
+
+        /// <summary>
         /// Get payment methods
         /// </summary>
         public async Task<PaymentMethodResponse?> GetPaymentMethodsAsync()
@@ -1484,6 +1570,82 @@ namespace SensePC.Desktop.WinUI.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"DetachPaymentMethod error: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Update billing plan for an instance (hourly/daily/monthly)
+        /// </summary>
+        public async Task<BillingPlanUpdateResult> UpdateBillingPlanAsync(string instanceId, string billingPlan)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                if (string.IsNullOrEmpty(idToken))
+                {
+                    return new BillingPlanUpdateResult { Success = false, ErrorMessage = "Not authenticated" };
+                }
+
+                using var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiConfig.BillingUrl}billing-plan");
+                request.Headers.Add("Authorization", idToken);
+                
+                var body = new { instanceId, billingPlan };
+                request.Content = new StringContent(
+                    JsonSerializer.Serialize(body),
+                    System.Text.Encoding.UTF8,
+                    "application/json");
+
+                var response = await _httpClient.SendAsync(request);
+                var content = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = JsonSerializer.Deserialize<BillingPlanUpdateResult>(content);
+                    if (result != null)
+                    {
+                        result.Success = true;
+                        return result;
+                    }
+                    return new BillingPlanUpdateResult { Success = true, Change = "upgrade" };
+                }
+                return new BillingPlanUpdateResult { Success = false, ErrorMessage = "Failed to update billing plan" };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"UpdateBillingPlan error: {ex.Message}");
+                return new BillingPlanUpdateResult { Success = false, ErrorMessage = ex.Message };
+            }
+        }
+
+        /// <summary>
+        /// Update auto-renew setting for an instance
+        /// </summary>
+        public async Task<bool> UpdateAutoRenewAsync(string instanceId, bool autoRenew)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                if (string.IsNullOrEmpty(idToken))
+                {
+                    return false;
+                }
+
+                using var request = new HttpRequestMessage(HttpMethod.Put, $"{ApiConfig.BillingUrl}auto-renew");
+                request.Headers.Add("Authorization", idToken);
+                
+                var body = new { instanceId, autoRenew };
+                request.Content = new StringContent(
+                    JsonSerializer.Serialize(body),
+                    System.Text.Encoding.UTF8,
+                    "application/json");
+
+                var response = await _httpClient.SendAsync(request);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"UpdateAutoRenew error: {ex.Message}");
                 return false;
             }
         }
@@ -1987,6 +2149,112 @@ namespace SensePC.Desktop.WinUI.Services
             {
                 System.Diagnostics.Debug.WriteLine($"ListFiles error: {ex.Message}");
                 return new StorageListResponse();
+            }
+        }
+
+        /// <summary>
+        /// Scan for duplicate files in storage
+        /// </summary>
+        public async Task<DedupScanResponse?> DedupScanAsync(string region = "virginia")
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                    return null;
+
+                var payload = new
+                {
+                    action = "scan",
+                    userId = userId,
+                    region = region,
+                    scope = "user",
+                    minSizeBytes = 0
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiConfig.StorageBaseUrl}/dedup/scan")
+                {
+                    Content = content
+                };
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+
+                var response = await _httpClient.SendAsync(request);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                System.Diagnostics.Debug.WriteLine($"DedupScan response: {responseContent}");
+
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                return JsonSerializer.Deserialize<DedupScanResponse>(responseContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DedupScan error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Merge duplicate files by keeping the primary and deleting duplicates
+        /// </summary>
+        public async Task<DedupMergeResponse?> DedupMergeAsync(List<DedupMergeGroup> groups, string region = "virginia", bool deleteFromS3 = true)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                    return null;
+
+                var payload = new
+                {
+                    action = "merge",
+                    userId = userId,
+                    region = region,
+                    deleteFromS3 = deleteFromS3,
+                    groups = groups.Select(g => new
+                    {
+                        primaryId = g.PrimaryId,
+                        duplicates = g.Duplicates
+                    }).ToList()
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiConfig.StorageBaseUrl}/dedup/merge")
+                {
+                    Content = content
+                };
+                request.Headers.Add("Authorization", $"Bearer {idToken}");
+
+                var response = await _httpClient.SendAsync(request);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                System.Diagnostics.Debug.WriteLine($"DedupMerge response: {responseContent}");
+
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                return JsonSerializer.Deserialize<DedupMergeResponse>(responseContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DedupMerge error: {ex.Message}");
+                return null;
             }
         }
 
@@ -3236,6 +3504,168 @@ namespace SensePC.Desktop.WinUI.Services
         [System.Text.Json.Serialization.JsonPropertyName("data")]
         public ResizeConfigData? Data { get; set; }
     }
+
+    /// <summary>
+    /// Promo eligibility and balance information
+    /// </summary>
+    public class PromoInfo
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("eligible")]
+        public bool Eligible { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("promoBalance")]
+        public decimal PromoBalance { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("cashback")]
+        public decimal Cashback { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("reason")]
+        public string? Reason { get; set; }
+    }
+
+    /// <summary>
+    /// Result of promo redemption
+    /// </summary>
+    public class PromoRedeemResult
+    {
+        public bool Success { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("message")]
+        public string? Message { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("amountAdded")]
+        public decimal AmountAdded { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("promoId")]
+        public string? PromoId { get; set; }
+
+        public string? ErrorMessage { get; set; }
+    }
+
+    /// <summary>
+    /// Result of billing plan update
+    /// </summary>
+    public class BillingPlanUpdateResult
+    {
+        public bool Success { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("change")]
+        public string? Change { get; set; } // "upgrade", "downgrade", "no_change"
+
+        [System.Text.Json.Serialization.JsonPropertyName("message")]
+        public string? Message { get; set; }
+
+        public string? ErrorMessage { get; set; }
+    }
+
+    #region Dedup Models
+
+    /// <summary>
+    /// Response from duplicate file scan
+    /// </summary>
+    public class DedupScanResponse
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("groups")]
+        public List<DedupGroup> Groups { get; set; } = new();
+
+        [System.Text.Json.Serialization.JsonPropertyName("stats")]
+        public DedupStats? Stats { get; set; }
+    }
+
+    /// <summary>
+    /// A group of duplicate files
+    /// </summary>
+    public class DedupGroup
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("groupKey")]
+        public DedupGroupKey? GroupKey { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("primary")]
+        public DedupFile? Primary { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("duplicates")]
+        public List<DedupFile> Duplicates { get; set; } = new();
+
+        [System.Text.Json.Serialization.JsonPropertyName("count")]
+        public int Count { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("totalBytes")]
+        public long TotalBytes { get; set; }
+    }
+
+    /// <summary>
+    /// Group key for identifying duplicates
+    /// </summary>
+    public class DedupGroupKey
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("fileName")]
+        public string? FileName { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
+        public long SizeBytes { get; set; }
+    }
+
+    /// <summary>
+    /// A file in a duplicate group
+    /// </summary>
+    public class DedupFile
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("id")]
+        public string? Id { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("fileName")]
+        public string? FileName { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("folder")]
+        public string? Folder { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
+        public long SizeBytes { get; set; }
+    }
+
+    /// <summary>
+    /// Statistics from duplicate scan
+    /// </summary>
+    public class DedupStats
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("totalFiles")]
+        public int TotalFiles { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("duplicateFiles")]
+        public int DuplicateFiles { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("duplicateBytes")]
+        public long DuplicateBytes { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("potentialSavings")]
+        public long PotentialSavings { get; set; }
+    }
+
+    /// <summary>
+    /// Request to merge a group of duplicates
+    /// </summary>
+    public class DedupMergeGroup
+    {
+        public string? PrimaryId { get; set; }
+        public List<string> Duplicates { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Response from duplicate merge
+    /// </summary>
+    public class DedupMergeResponse
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("freedBytes")]
+        public long FreedBytes { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("removedFiles")]
+        public int RemovedFiles { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("success")]
+        public bool Success { get; set; }
+    }
+
+    #endregion
 
     #endregion
 }

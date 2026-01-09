@@ -136,20 +136,50 @@
                     
                     <!-- Promo & Cashback -->
                     <Border Grid.Column="2" 
-                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                            BorderThickness="1" CornerRadius="8" Padding="24">
-                        <Grid RowSpacing="16">
+                            CornerRadius="8" Padding="24">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#2530F0" Offset="0.1"/>
+                                <GradientStop Color="#4C55F8" Offset="0.48"/>
+                                <GradientStop Color="#D971FF" Offset="1.05"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Grid RowSpacing="12">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             
-                            <TextBlock Grid.Row="0" Text="Promo &amp; Cashback" 
-                                       Style="{StaticResource BodyStrongTextBlockStyle}"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <!-- Promo Eligibility Banner (shown when eligible) -->
+                            <StackPanel x:Name="PromoEligiblePanel" Grid.Row="0" Spacing="8" Visibility="Collapsed">
+                                <TextBlock Text="Get up to $10.00 in promotional credit!" 
+                                           FontSize="18" FontWeight="SemiBold" 
+                                           Foreground="White" TextWrapping="Wrap"/>
+                                <TextBlock Text="Claim your free credits to start using SensePC today!" 
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="#FFFFFFCC"/>
+                                <Button x:Name="RedeemCreditsButton" 
+                                        Style="{StaticResource AccentButtonStyle}"
+                                        Background="White" 
+                                        Foreground="#2530F0"
+                                        Click="RedeemCredits_Click"
+                                        Padding="16,8" Margin="0,4,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="Redeem Your Credits"/>
+                                        <FontIcon Glyph="&#xE72A;" FontSize="14"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
                             
-                            <Grid Grid.Row="1">
+                            <!-- Header (shown when not eligible or has balance) -->
+                            <TextBlock x:Name="PromoHeaderText" Grid.Row="0" 
+                                       Text="Promo &amp; Cashback" 
+                                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                                       Foreground="White"/>
+                            
+                            <!-- Promo & Cashback Values -->
+                            <Grid x:Name="PromoValuesPanel" Grid.Row="1">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
@@ -159,32 +189,38 @@
                                 <StackPanel Grid.Column="0" Spacing="4">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <FontIcon Glyph="&#xE7C1;" FontSize="14" 
-                                                  Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                                                  Foreground="#87CEEB"/>
                                         <TextBlock Text="Promo" Style="{StaticResource CaptionTextBlockStyle}"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                   Foreground="#FFFFFFCC"/>
                                     </StackPanel>
                                     <TextBlock x:Name="PromoText" Text="$0.00" 
                                                FontSize="24" FontWeight="SemiBold"
-                                               Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                                               Foreground="White"/>
                                 </StackPanel>
                                 
                                 <Border Grid.Column="1" Width="1" 
-                                        Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                        Background="#FFFFFF33"
                                         Margin="12,0"/>
                                 
                                 <StackPanel Grid.Column="2" Spacing="4" HorizontalAlignment="Right">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <FontIcon Glyph="&#xE735;" FontSize="14" 
-                                                  Foreground="{ThemeResource SystemFillColorSuccessBrush}"/>
+                                                  Foreground="#90EE90"/>
                                         <TextBlock Text="Cashback" Style="{StaticResource CaptionTextBlockStyle}"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                   Foreground="#FFFFFFCC"/>
                                     </StackPanel>
                                     <TextBlock x:Name="CashbackText" Text="$0.00" 
                                                FontSize="24" FontWeight="SemiBold"
-                                               Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                                               Foreground="White"
                                                HorizontalAlignment="Right"/>
                                 </StackPanel>
                             </Grid>
+                            
+                            <!-- Info tooltip text -->
+                            <TextBlock Grid.Row="2" 
+                                       Text="Credits are automatically applied to your usage"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="#FFFFFF99"/>
                         </Grid>
                     </Border>
                 </Grid>

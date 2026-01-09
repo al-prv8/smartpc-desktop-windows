@@ -45,10 +45,11 @@ namespace SensePC.Desktop.WinUI.Views
                 var autoRechargeTask = _apiService.GetAutoRechargeAsync();
                 var storagePricingTask = _apiService.GetStoragePricingAsync();
                 var rechargeHistoryTask = _apiService.GetRechargeHistoryAsync(20);
+                var promoInfoTask = _apiService.GetPromoInfoAsync();
 
                 await System.Threading.Tasks.Task.WhenAll(
                     balanceTask, spendingTask, paymentMethodsTask, 
-                    autoRechargeTask, storagePricingTask, rechargeHistoryTask);
+                    autoRechargeTask, storagePricingTask, rechargeHistoryTask, promoInfoTask);
 
                 // Update Balance
                 var balance = await balanceTask;
@@ -151,6 +152,10 @@ namespace SensePC.Desktop.WinUI.Views
                 var rechargeHistory = await rechargeHistoryTask;
                 RechargeListView.ItemsSource = rechargeHistory;
                 NoRechargeText.Visibility = rechargeHistory.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+                // Update Promo Eligibility
+                var promoInfo = await promoInfoTask;
+                UpdatePromoUI(promoInfo, balance);
             }
             catch (System.Exception ex)
             {
@@ -171,6 +176,74 @@ namespace SensePC.Desktop.WinUI.Views
                 amounts.Add(new RechargeAmountItem { Amount = amount, Display = $"${amount:N0}" });
             }
             RechargeAmountsListView.ItemsSource = amounts;
+        }
+
+        private void UpdatePromoUI(SensePC.Desktop.WinUI.Services.PromoInfo? promoInfo, SensePC.Desktop.WinUI.Services.BillingBalance? balance)
+        {
+            // Check if user is eligible for promo redemption and has no promo balance
+            bool isEligible = promoInfo?.Eligible == true;
+            bool hasPromoBalance = (balance?.PromoBalance ?? 0) > 0 || (balance?.Cashback ?? 0) > 0;
+
+            if (isEligible && !hasPromoBalance)
+            {
+                // Show the promo eligibility banner
+                PromoEligiblePanel.Visibility = Visibility.Visible;
+                PromoHeaderText.Visibility = Visibility.Collapsed;
+                PromoValuesPanel.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                // Show the promo/cashback values
+                PromoEligiblePanel.Visibility = Visibility.Collapsed;
+                PromoHeaderText.Visibility = Visibility.Visible;
+                PromoValuesPanel.Visibility = Visibility.Visible;
+            }
+        }
+
+        private async void RedeemCredits_Click(object sender, RoutedEventArgs e)
+        {
+            // Confirm redemption
+            var confirmDialog = new ContentDialog
+            {
+                Title = "Confirm Redemption",
+                Content = "Are you sure you want to claim your free SensePC credits?\nThis action cannot be undone.",
+                PrimaryButtonText = "Redeem Credits",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = this.XamlRoot
+            };
+
+            var result = await confirmDialog.ShowAsync();
+            if (result != ContentDialogResult.Primary) return;
+
+            // Process redemption
+            LoadingOverlay.Visibility = Visibility.Visible;
+            RedeemCreditsButton.IsEnabled = false;
+
+            var redeemResult = await _apiService.RedeemPromoAsync();
+            
+            LoadingOverlay.Visibility = Visibility.Collapsed;
+            RedeemCreditsButton.IsEnabled = true;
+
+            if (redeemResult.Success)
+            {
+                // Show success dialog
+                var successDialog = new ContentDialog
+                {
+                    Title = "Credits Redeemed! 🎉",
+                    Content = $"You've received ${redeemResult.AmountAdded:N2} in your SensePC wallet",
+                    CloseButtonText = "OK",
+                    XamlRoot = this.XamlRoot
+                };
+                await successDialog.ShowAsync();
+
+                // Refresh data to show updated balance
+                await LoadAllDataAsync();
+            }
+            else
+            {
+                await ShowErrorDialogAsync(redeemResult.ErrorMessage ?? "Failed to redeem promo credits. Please try again.");
+            }
         }
 
         #region Event Handlers
@@ -477,7 +550,9 @@ namespace SensePC.Desktop.WinUI.Views
 
         private async void HistoryTab_Checked(object sender, RoutedEventArgs e)
         {
-            if (RechargeTab == null) return;
+            // Safety check - ensure all elements are initialized
+            if (RechargeTab == null || RechargeHistoryPanel == null || 
+                PCUsageHistoryPanel == null || CloudUsageHistoryPanel == null) return;
 
             // Hide all panels
             RechargeHistoryPanel.Visibility = Visibility.Collapsed;

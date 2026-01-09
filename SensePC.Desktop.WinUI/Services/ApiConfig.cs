@@ -46,5 +46,8 @@ namespace SensePC.Desktop.WinUI.Services
 
         // Storage APIs (Sense Cloud) - DEV
         public const string StorageBaseUrl = "https://bijv5mqt5l.execute-api.us-east-1.amazonaws.com/dev";
+
+        // Promo & Cashback API (DEV)
+        public const string PromoUrl = "https://3kuf94ola1.execute-api.us-east-1.amazonaws.com/dev/promo";
     }
 }

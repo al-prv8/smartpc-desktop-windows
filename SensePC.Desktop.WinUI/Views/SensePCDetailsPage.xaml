@@ -92,33 +92,76 @@
                                 </Grid.RowDefinitions>
                                 
                                 <!-- CPU -->
-                                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4">
-                                    <TextBlock Text="CPU" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
-                                    <TextBlock x:Name="CpuText" Text="0.00%" FontSize="15" FontWeight="Medium"/>
+                                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="6">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon Glyph="&#xE950;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                            <TextBlock Text="CPU" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                        <TextBlock x:Name="CpuText" Grid.Column="1" Text="0.00%" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    </Grid>
+                                    <ProgressBar x:Name="CpuProgressBar" Value="0" Maximum="100" Height="8" CornerRadius="4">
+                                        <ProgressBar.Foreground>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                <GradientStop Color="#2530F0" Offset="0"/>
+                                                <GradientStop Color="#A801BA" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </ProgressBar.Foreground>
+                                    </ProgressBar>
                                 </StackPanel>
                                 
                                 <!-- Memory -->
-                                <StackPanel Grid.Row="0" Grid.Column="1" Spacing="4">
-                                    <TextBlock Text="Memory" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
-                                    <TextBlock x:Name="MemoryText" Text="0.00%" FontSize="15" FontWeight="Medium"/>
+                                <StackPanel Grid.Row="0" Grid.Column="1" Spacing="6">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon Glyph="&#xE958;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                            <TextBlock Text="Memory" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                        <TextBlock x:Name="MemoryText" Grid.Column="1" Text="0.00%" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    </Grid>
+                                    <ProgressBar x:Name="MemoryProgressBar" Value="0" Maximum="100" Height="8" CornerRadius="4">
+                                        <ProgressBar.Foreground>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                <GradientStop Color="#2530F0" Offset="0"/>
+                                                <GradientStop Color="#A801BA" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </ProgressBar.Foreground>
+                                    </ProgressBar>
                                 </StackPanel>
                                 
                                 <!-- Region -->
-                                <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4">
-                                    <TextBlock Text="Region" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
-                                    <TextBlock x:Name="RegionText" Text="—" FontSize="15" FontWeight="Medium"/>
+                                <StackPanel Grid.Row="1" Grid.Column="0" Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon Glyph="&#xE774;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        <TextBlock Text="Region" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="RegionText" Text="—" FontSize="15" FontWeight="Medium" Margin="22,0,0,0"/>
                                 </StackPanel>
                                 
                                 <!-- Uptime -->
-                                <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
-                                    <TextBlock Text="Uptime" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
-                                    <TextBlock x:Name="UptimeText" Text="N/A" FontSize="15" FontWeight="Medium"/>
+                                <StackPanel Grid.Row="1" Grid.Column="1" Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon Glyph="&#xE916;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        <TextBlock Text="Uptime" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="UptimeText" Text="N/A" FontSize="15" FontWeight="Medium" Margin="22,0,0,0"/>
                                 </StackPanel>
                                 
                                 <!-- Cost -->
-                                <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Spacing="4">
-                                    <TextBlock Text="Cost" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
-                                    <TextBlock x:Name="CostText" Text="$0.00 this month" FontSize="15" FontWeight="Medium" Foreground="#10B981"/>
+                                <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon Glyph="&#xE8C7;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        <TextBlock Text="Cost" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="CostText" Text="$0.00 this month" FontSize="15" FontWeight="Medium" Foreground="#10B981" Margin="22,0,0,0"/>
                                 </StackPanel>
                             </Grid>
                         </StackPanel>
@@ -182,15 +225,43 @@
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="20">
                         <StackPanel Spacing="16">
-                            <TextBlock Text="Assigned User" FontWeight="SemiBold" FontSize="16"/>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE77B;" FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock Text="Assigned User" FontWeight="SemiBold" FontSize="16"/>
+                            </StackPanel>
                             
+                            <!-- User Info Panel (shown when user is assigned) -->
+                            <StackPanel x:Name="AssignedUserInfoPanel" Visibility="Collapsed" Spacing="12">
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <!-- Avatar Circle -->
+                                    <Border Width="40" Height="40" CornerRadius="20">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#2530F0" Offset="0"/>
+                                                <GradientStop Color="#A801BA" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <TextBlock x:Name="UserInitialsText" Text="?" 
+                                                   FontSize="16" FontWeight="SemiBold" Foreground="White"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <!-- Name & Email -->
+                                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Name="UserNameText" Text="User Name" FontWeight="SemiBold"/>
+                                        <TextBlock x:Name="UserEmailText" Text="email@example.com" 
+                                                   FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                            
+                            <!-- No User Text (shown when no user assigned) -->
                             <TextBlock x:Name="AssignedUserText" Text="No user assigned to this PC." 
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                             
                             <Button x:Name="AssignUserBtn" Click="AssignUser_Click">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <FontIcon Glyph="&#xE77B;" FontSize="14"/>
-                                    <TextBlock Text="Assign user"/>
+                                    <FontIcon x:Name="AssignUserIcon" Glyph="&#xE77B;" FontSize="14"/>
+                                    <TextBlock x:Name="AssignUserBtnText" Text="Assign user"/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
@@ -202,13 +273,36 @@
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1" CornerRadius="8" Padding="20">
                         <StackPanel Spacing="16">
-                            <TextBlock Text="Current Billing Plan:" FontWeight="SemiBold" FontSize="16"/>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE8C7;" FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock Text="Current Billing Plan" FontWeight="SemiBold" FontSize="16"/>
+                            </StackPanel>
                             
                             <StackPanel Spacing="8">
                                 <TextBlock x:Name="BillingPlanText" Text="Hourly" FontSize="18" FontWeight="SemiBold" Foreground="#5F9FFF"/>
                                 <TextBlock x:Name="BillingPlanDescription" TextWrapping="Wrap"
                                            Text="Unlimited usage — pay per hour while running. Great for quick tasks, testing, and flexible start/stop."
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                            </StackPanel>
+                            
+                            <!-- Auto-Renew Toggle (only for daily/monthly plans) -->
+                            <StackPanel x:Name="AutoRenewPanel" Visibility="Collapsed" Spacing="8">
+                                <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="0,4"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="Auto-Renew" FontWeight="SemiBold"/>
+                                        <TextBlock x:Name="AutoRenewDescription" 
+                                                   Text="Automatically renew at the end of billing cycle" 
+                                                   FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch x:Name="AutoRenewToggle" Grid.Column="1" 
+                                                  Toggled="AutoRenewToggle_Toggled" 
+                                                  VerticalAlignment="Center" Margin="0"/>
+                                </Grid>
                             </StackPanel>
                             
                             <Button Click="ManagePlan_Click">

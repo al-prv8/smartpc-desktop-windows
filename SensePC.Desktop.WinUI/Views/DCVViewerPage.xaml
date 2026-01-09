@@ -1,0 +1,109 @@
+\u003cPage
+    x:Class="SensePC.Desktop.WinUI.Views.DCVViewerPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Loaded="Page_Loaded"\u003e
+
+    \u003cGrid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"\u003e
+        \u003cGrid.RowDefinitions\u003e
+            \u003cRowDefinition Height="Auto"/\u003e
+            \u003cRowDefinition Height="*"/\u003e
+        \u003c/Grid.RowDefinitions\u003e
+
+        \u003c!-- Top Bar --\u003e
+        \u003cBorder Grid.Row="0" 
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="16,12"\u003e
+            \u003cGrid\u003e
+                \u003cGrid.ColumnDefinitions\u003e
+                    \u003cColumnDefinition Width="Auto"/\u003e
+                    \u003cColumnDefinition Width="*"/\u003e
+                    \u003cColumnDefinition Width="Auto"/\u003e
+                \u003c/Grid.ColumnDefinitions\u003e
+
+                \u003c!-- Back Button --\u003e
+                \u003cButton Grid.Column="0" 
+                        x:Name="BackButton"
+                        Click="BackButton_Click"
+                        Style="{StaticResource SubtleButtonStyle}"\u003e
+                    \u003cStackPanel Orientation="Horizontal" Spacing="8"\u003e
+                        \u003cFontIcon Glyph="\&amp;#xE72B;" FontSize="16"/\u003e
+                        \u003cTextBlock Text="Back to SensePC"/\u003e
+                    \u003c/StackPanel\u003e
+                \u003c/Button\u003e
+
+                \u003c!-- PC Name --\u003e
+                \u003cTextBlock Grid.Column="1"
+                           x:Name="PCNameText"
+                           Text="Connecting..."
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"/\u003e
+
+                \u003c!-- Actions --\u003e
+                \u003cStackPanel Grid.Column="2" 
+                              Orientation="Horizontal" 
+                              Spacing="8"\u003e
+                    \u003cButton x:Name="RefreshButton"
+                            Click="RefreshButton_Click"
+                            Visibility="Collapsed"
+                            Style="{StaticResource SubtleButtonStyle}"\u003e
+                        \u003cFontIcon Glyph="\&amp;#xE72C;" FontSize="16"/\u003e
+                    \u003c/Button\u003e
+
+                    \u003cButton x:Name="FullscreenButton"
+                            Click="FullscreenButton_Click"
+                            Style="{StaticResource SubtleButtonStyle}"\u003e
+                        \u003cFontIcon Glyph="\&amp;#xE740;" FontSize="16"/\u003e
+                    \u003c/Button\u003e
+                \u003c/StackPanel\u003e
+            \u003c/Grid\u003e
+        \u003c/Border\u003e
+
+        \u003c!-- DCV WebView Content --\u003e
+        \u003cGrid Grid.Row="1"\u003e
+            \u003c!-- Loading State --\u003e
+            \u003cStackPanel x:Name="LoadingPanel"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          Spacing="16"\u003e
+                \u003cProgressRing IsActive="True" Width="48" Height="48"/\u003e
+                \u003cTextBlock Text="Connecting to your PC..."
+                             FontSize="16"
+                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"/\u003e
+            \u003c/StackPanel\u003e
+
+            \u003c!-- Error State --\u003e
+            \u003cStackPanel x:Name="ErrorPanel"
+                          Visibility="Collapsed"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          Spacing="16"
+                          MaxWidth="400"
+                          Padding="24"\u003e
+                \u003cFontIcon Glyph="\&amp;#xE783;" 
+                          FontSize="48"
+                          Foreground="{ThemeResource SystemErrorTextColor}"/\u003e
+                \u003cTextBlock x:Name="ErrorText"
+                             Text="Failed to connect to PC"
+                             FontSize="16"
+                             TextWrapping="Wrap"
+                             HorizontalAlignment="Center"/\u003e
+                \u003cButton Content="Try Again" 
+                        Click="Retry_Click"
+                        HorizontalAlignment="Center"/\u003e
+            \u003c/StackPanel\u003e
+
+            \u003c!-- WebView2 for DCV --\u003e
+            \u003cWebView2 x:Name="DCVWebView"
+                       Visibility="Collapsed"
+                       NavigationCompleted="DCVWebView_NavigationCompleted"/\u003e
+        \u003c/Grid\u003e
+    \u003c/Grid\u003e
+\u003c/Page\u003e

@@ -44,7 +44,7 @@ namespace SensePC.Desktop.WinUI.Models
         public string? Error { get; set; }
 
         [JsonPropertyName("assignedUser")]
-        public string? AssignedUser { get; set; }
+        public AssignedUserInfo? AssignedUser { get; set; }
 
         [JsonPropertyName("billingPlan")]
         public string? BillingPlan { get; set; }
@@ -54,6 +54,24 @@ namespace SensePC.Desktop.WinUI.Models
 
         [JsonPropertyName("monthlyBillingTotal")]
         public decimal? MonthlyBillingTotal { get; set; }
+
+        [JsonPropertyName("autoRenew")]
+        public bool? AutoRenew { get; set; }
+    }
+
+    /// <summary>
+    /// Assigned user information
+    /// </summary>
+    public class AssignedUserInfo
+    {
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("email")]
+        public string? Email { get; set; }
+
+        [JsonPropertyName("id")]
+        public string? Id { get; set; }
     }
 
     /// <summary>
@@ -145,6 +163,9 @@ namespace SensePC.Desktop.WinUI.Models
 
         [JsonPropertyName("authToken")]
         public string? AuthToken { get; set; }
+
+        [JsonPropertyName("sessionToken")]
+        public string? SessionToken { get; set; }
 
         [JsonPropertyName("expiresAt")]
         public long? ExpiresAt { get; set; }

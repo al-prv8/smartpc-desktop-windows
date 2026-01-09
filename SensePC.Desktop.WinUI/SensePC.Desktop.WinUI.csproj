@@ -21,6 +21,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- Deploy Windows App SDK with the app (self-contained) -->
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <!-- Fix for VS Insiders MSVC lookup error -->
+    <DisableOutOfProcTaskHost>true</DisableOutOfProcTaskHost>
+    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
   </PropertyGroup>
 
   <ItemGroup>
@@ -48,8 +51,11 @@
     <Page Include="Views\SupportPage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
     <Page Include="Views\TicketConversationPage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
     <Page Include="Views\StoragePage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Views\DCVSessionsPage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Views\SettingsPage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
     <Page Include="Controls\PCInstanceCard.xaml" SubType="Designer" Generator="MSBuild:Compile" />
   </ItemGroup>
+
   
   <ItemGroup>
     <ProjectReference Include="..\SensePC.Desktop\SensePC.Desktop.csproj" Condition="false" /> 

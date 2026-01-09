@@ -17,6 +17,7 @@ namespace SensePC.Desktop.WinUI.Views
         private DispatcherTimer? _metricsTimer;
         private SensePCApiService? _apiService;
         private bool _isRunning = false;
+        private bool _isUpdatingAutoRenew = false;
 
         public SensePCDetailsPage()
         {
@@ -79,9 +80,16 @@ namespace SensePC.Desktop.WinUI.Views
         {
             if (_details == null) return;
 
-            // Computer Metrics
-            CpuText.Text = _details.CpuUsage ?? "0.00%";
-            MemoryText.Text = _details.MemoryUsage ?? "0.00%";
+            // Computer Metrics - Parse percentage values
+            var cpuValue = ParsePercentage(_details.CpuUsage);
+            var memValue = ParsePercentage(_details.MemoryUsage);
+            
+            CpuText.Text = $"{cpuValue:F2}%";
+            CpuProgressBar.Value = cpuValue;
+            
+            MemoryText.Text = $"{memValue:F2}%";
+            MemoryProgressBar.Value = memValue;
+            
             RegionText.Text = _details.Region ?? "—";
             UptimeText.Text = _details.Uptime ?? "N/A";
             CostText.Text = _details.MonthlyBillingTotal != null 
@@ -100,21 +108,55 @@ namespace SensePC.Desktop.WinUI.Views
             }
 
             // Assigned User
-            if (!string.IsNullOrEmpty(_details.AssignedUser))
+            if (_details.AssignedUser != null && !string.IsNullOrEmpty(_details.AssignedUser.Name))
             {
-                AssignedUserText.Text = _details.AssignedUser;
-                AssignUserBtn.Content = CreateButtonContent("\uE70F", "Unassign");
+                // Show user info panel with avatar
+                AssignedUserInfoPanel.Visibility = Visibility.Visible;
+                AssignedUserText.Visibility = Visibility.Collapsed;
+                
+                // Set initials (first letter of name)
+                var initials = _details.AssignedUser.Name.Length > 0 
+                    ? _details.AssignedUser.Name[0].ToString().ToUpper() 
+                    : "?";
+                UserInitialsText.Text = initials;
+                UserNameText.Text = _details.AssignedUser.Name;
+                UserEmailText.Text = _details.AssignedUser.Email ?? "";
+                
+                // Update button to show "Manage user" 
+                AssignUserIcon.Glyph = "\uE70F";
+                AssignUserBtnText.Text = "Manage user";
             }
             else
             {
+                // No user assigned
+                AssignedUserInfoPanel.Visibility = Visibility.Collapsed;
+                AssignedUserText.Visibility = Visibility.Visible;
                 AssignedUserText.Text = "No user assigned to this PC.";
-                AssignUserBtn.Content = CreateButtonContent("\uE77B", "Assign user");
+                
+                AssignUserIcon.Glyph = "\uE77B";
+                AssignUserBtnText.Text = "Assign user";
             }
 
             // Billing Plan
-            BillingPlanText.Text = _details.BillingPlan ?? "Hourly";
+            var currentPlan = _details.BillingPlan?.ToLower() ?? "hourly";
+            BillingPlanText.Text = char.ToUpper(currentPlan[0]) + currentPlan[1..];
             BillingPlanDescription.Text = _details.BillingPlanDescription ?? 
                 "Unlimited usage — pay per hour while running. Great for quick tasks, testing, and flexible start/stop.";
+
+            // Auto-Renew toggle - only show for daily/monthly plans
+            if (currentPlan == "daily" || currentPlan == "monthly")
+            {
+                AutoRenewPanel.Visibility = Visibility.Visible;
+                _isUpdatingAutoRenew = true; // Prevent toggle event from firing during load
+                AutoRenewToggle.IsOn = _details.AutoRenew ?? false;
+                _isUpdatingAutoRenew = false;
+                
+                AutoRenewDescription.Text = $"Automatically renew at the end of the {currentPlan} cycle";
+            }
+            else
+            {
+                AutoRenewPanel.Visibility = Visibility.Collapsed;
+            }
 
             // Schedule
             if (_details.Schedule != null && (_details.Schedule.AutoStartTime != null || _details.Schedule.AutoStopTime != null))
@@ -175,6 +217,17 @@ namespace SensePC.Desktop.WinUI.Views
             }
         }
 
+        private static double ParsePercentage(string? value)
+        {
+            if (string.IsNullOrEmpty(value)) return 0;
+            var cleaned = value.Replace("%", "").Trim();
+            if (double.TryParse(cleaned, out var result))
+            {
+                return Math.Clamp(result, 0, 100);
+            }
+            return 0;
+        }
+
         private void StartMetricsRefresh()
         {
             _metricsTimer = new DispatcherTimer();
@@ -225,11 +278,22 @@ namespace SensePC.Desktop.WinUI.Views
                 var result = await _apiService.LaunchSessionAsync(_pc.InstanceId);
                 if (result != null && !string.IsNullOrEmpty(result.DcvUrl))
                 {
-                    await Windows.System.Launcher.LaunchUriAsync(new Uri(result.DcvUrl));
+                    // Try to launch native DCV client first
+                    bool launched = await LaunchNativeDCVClient(result.DcvUrl);
+                    
+                    if (!launched)
+                    {
+                        // Fallback: Open in browser if DCV client not installed
+                        await Windows.System.Launcher.LaunchUriAsync(new Uri(result.DcvUrl));
+                    }
                 }
                 else if (result != null && !string.IsNullOrEmpty(result.GatewayUrl))
                 {
-                    await Windows.System.Launcher.LaunchUriAsync(new Uri(result.GatewayUrl));
+                    bool launched = await LaunchNativeDCVClient(result.GatewayUrl);
+                    if (!launched)
+                    {
+                        await Windows.System.Launcher.LaunchUriAsync(new Uri(result.GatewayUrl));
+                    }
                 }
                 else
                 {
@@ -243,6 +307,63 @@ namespace SensePC.Desktop.WinUI.Views
             finally
             {
                 LoadingOverlay.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        /// <summary>
+        /// Attempts to launch the native NICE DCV client application
+        /// </summary>
+        private async Task<bool> LaunchNativeDCVClient(string dcvUrl)
+        {
+            try
+            {
+                // Common DCV client installation paths
+                var possiblePaths = new[]
+                {
+                    @"C:\Program Files\NICE\DCV\Client\bin\dcvviewer.exe",
+                    @"C:\Program Files (x86)\NICE\DCV\Client\bin\dcvviewer.exe",
+                    Environment.ExpandEnvironmentVariables(@"%ProgramFiles%\NICE\DCV\Client\bin\dcvviewer.exe"),
+                    Environment.ExpandEnvironmentVariables(@"%ProgramFiles(x86)%\NICE\DCV\Client\bin\dcvviewer.exe")
+                };
+
+                string? dcvClientPath = null;
+                foreach (var path in possiblePaths)
+                {
+                    if (System.IO.File.Exists(path))
+                    {
+                        dcvClientPath = path;
+                        System.Diagnostics.Debug.WriteLine($"Found DCV client at: {path}");
+                        break;
+                    }
+                }
+
+                if (dcvClientPath != null)
+                {
+                    // DCV viewer expects the URL without any protocol wrapper
+                    // Format: dcvviewer.exe <connection_url>
+                    var startInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = dcvClientPath,
+                        Arguments = $"\"{dcvUrl}\"", // Quote the URL
+                        UseShellExecute = true,
+                        CreateNoWindow = false
+                    };
+
+                    System.Diagnostics.Debug.WriteLine($"Launching DCV client: {dcvClientPath} {dcvUrl}");
+                    System.Diagnostics.Process.Start(startInfo);
+                    
+                    // Small delay to ensure process starts
+                    await Task.Delay(100);
+                    return true;
+                }
+
+                System.Diagnostics.Debug.WriteLine("DCV client not found in any standard location");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to launch native DCV client: {ex.Message}");
+                return false;
             }
         }
 
@@ -335,8 +456,145 @@ namespace SensePC.Desktop.WinUI.Views
 
         private async void ManagePlan_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Navigate to billing or show plan selection
-            await ShowDialogAsync("Manage Plan", "Plan management will be implemented.");
+            // Create billing plan selection dialog
+            var currentPlan = _details?.BillingPlan?.ToLower() ?? "hourly";
+            var selectedPlan = currentPlan;
+
+            var dialog = new ContentDialog
+            {
+                Title = "Manage Billing Plan",
+                XamlRoot = this.XamlRoot,
+                PrimaryButtonText = "Apply",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary
+            };
+
+            var content = new StackPanel { Spacing = 16, MinWidth = 400 };
+
+            // Plan options
+            var plans = new[]
+            {
+                ("hourly", "Hourly", "Pay per hour while running. Great for quick tasks."),
+                ("daily", "Daily", "Ideal for day-long projects. ~10% savings vs Hourly."),
+                ("monthly", "Monthly", "Best value for regular users. ~15% savings vs Hourly.")
+            };
+
+            var radioButtons = new RadioButtons { MaxColumns = 1 };
+            
+            foreach (var (planId, planName, planDesc) in plans)
+            {
+                var planPanel = new StackPanel { Spacing = 4 };
+                planPanel.Children.Add(new TextBlock 
+                { 
+                    Text = planName, 
+                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold 
+                });
+                planPanel.Children.Add(new TextBlock 
+                { 
+                    Text = planDesc, 
+                    FontSize = 12, 
+                    Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
+                    TextWrapping = TextWrapping.Wrap
+                });
+
+                var radioItem = new RadioButton 
+                { 
+                    Content = planPanel, 
+                    Tag = planId,
+                    IsChecked = planId == currentPlan,
+                    Margin = new Thickness(0, 4, 0, 4)
+                };
+                radioItem.Checked += (s, args) => selectedPlan = (string)((RadioButton)s).Tag;
+                radioButtons.Items.Add(radioItem);
+            }
+
+            content.Children.Add(radioButtons);
+
+            // Info text
+            content.Children.Add(new TextBlock
+            {
+                Text = "Plan changes take effect immediately. Daily/Monthly plans are charged from your wallet.",
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 8, 0, 0)
+            });
+
+            dialog.Content = content;
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary && selectedPlan != currentPlan && _pc != null)
+            {
+                // Apply the new plan
+                var updateResult = await _apiService.UpdateBillingPlanAsync(_pc.InstanceId ?? "", selectedPlan);
+                
+                if (updateResult.Success)
+                {
+                    string message = updateResult.Change == "downgrade"
+                        ? $"Downgrade to {selectedPlan} plan scheduled for end of billing cycle."
+                        : $"Plan changed to {selectedPlan}.";
+                    
+                    await ShowDialogAsync("Plan Updated", message);
+                    await RefreshDetailsAsync();
+                }
+                else
+                {
+                    await ShowDialogAsync("Error", updateResult.ErrorMessage ?? "Failed to update billing plan.");
+                }
+            }
+        }
+
+        private async void AutoRenewToggle_Toggled(object sender, RoutedEventArgs e)
+        {
+            // Skip if we're programmatically updating the toggle
+            if (_isUpdatingAutoRenew || _pc == null || _apiService == null) return;
+
+            var newValue = AutoRenewToggle.IsOn;
+
+            // If disabling, show confirmation dialog
+            if (!newValue)
+            {
+                var confirmDialog = new ContentDialog
+                {
+                    Title = "Disable Auto-Renew?",
+                    Content = "Disabling auto-renew will stop the PC as soon as the current plan ends.",
+                    PrimaryButtonText = "Disable",
+                    CloseButtonText = "Cancel",
+                    DefaultButton = ContentDialogButton.Close,
+                    XamlRoot = this.XamlRoot
+                };
+
+                var result = await confirmDialog.ShowAsync();
+                if (result != ContentDialogResult.Primary)
+                {
+                    // User cancelled - revert toggle
+                    _isUpdatingAutoRenew = true;
+                    AutoRenewToggle.IsOn = true;
+                    _isUpdatingAutoRenew = false;
+                    return;
+                }
+            }
+
+            // Call API to update auto-renew
+            var success = await _apiService.UpdateAutoRenewAsync(_pc.InstanceId ?? "", newValue);
+            
+            if (success)
+            {
+                await ShowDialogAsync(
+                    newValue ? "Auto-Renew Enabled" : "Auto-Renew Disabled",
+                    newValue 
+                        ? "Your plan will automatically renew at the end of each billing cycle."
+                        : "Auto-renew has been disabled. The PC will stop when the current cycle ends."
+                );
+            }
+            else
+            {
+                // Revert toggle on failure
+                _isUpdatingAutoRenew = true;
+                AutoRenewToggle.IsOn = !newValue;
+                _isUpdatingAutoRenew = false;
+                await ShowDialogAsync("Error", "Failed to update auto-renew setting. Please try again.");
+            }
         }
 
         private async void ConfigureSchedule_Click(object sender, RoutedEventArgs e)

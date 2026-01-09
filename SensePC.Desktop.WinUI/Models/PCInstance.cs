@@ -43,11 +43,18 @@ namespace SensePC.Desktop.WinUI.Models
         [JsonPropertyName("autoRenew")]
         public bool? AutoRenew { get; set; }
 
+        [JsonPropertyName("publicIpAddress")]
+        public string? PublicIpAddress { get; set; }
+
+        [JsonPropertyName("privateIpAddress")]
+        public string? PrivateIpAddress { get; set; }
+
         // Helper properties for UI
         public bool IsRunning => State?.ToLower() == "running";
         public bool IsStopped => State?.ToLower() == "stopped";
         public bool IsBusy => State?.ToLower() is "pending" or "starting" or "stopping" or "rebooting";
     }
+
 
     /// <summary>
     /// PC specifications
