@@ -749,6 +749,9 @@
                                                Style="{StaticResource CaptionTextBlockStyle}"
                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                HorizontalAlignment="Center" Margin="0,24" Visibility="Collapsed"/>
+                                    <Button x:Name="LoadMoreRechargeButton" Content="Load More" 
+                                            HorizontalAlignment="Center" Margin="0,12"
+                                            Visibility="Collapsed" Click="LoadMoreRecharge_Click"/>
                                 </StackPanel>
                                 
                                 <!-- PC Usage History -->
@@ -790,15 +793,55 @@
                                                Style="{StaticResource CaptionTextBlockStyle}"
                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                HorizontalAlignment="Center" Margin="0,24" Visibility="Collapsed"/>
+                                    <Button x:Name="LoadMorePCUsageButton" Content="Load More" 
+                                            HorizontalAlignment="Center" Margin="0,12"
+                                            Visibility="Collapsed" Click="LoadMorePCUsage_Click"/>
                                 </StackPanel>
                                 
                                 <!-- Cloud Usage History -->
                                 <StackPanel x:Name="CloudUsageHistoryPanel" Visibility="Collapsed">
+                                    <ListView x:Name="CloudUsageListView" SelectionMode="None" Padding="8,0">
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Padding="16,12" ColumnSpacing="16">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="1.5*"/>
+                                                        <ColumnDefinition Width="2*"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    
+                                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                                        <FontIcon Glyph="&#xE8AC;" FontSize="16" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{Binding MaxStorageDisplay}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                        <Border Background="{ThemeResource ControlFillColorTertiaryBrush}"
+                                                                CornerRadius="4" Padding="6,2">
+                                                            <TextBlock Text="{Binding BillingPlan}" FontSize="11"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DateRangeDisplay}" 
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding AmountDisplay}" 
+                                                               FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    <Border Grid.Column="3" 
+                                                            Background="#2563EB"
+                                                            CornerRadius="4" Padding="8,4" 
+                                                            HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                        <TextBlock Text="completed" FontSize="12" Foreground="White"/>
+                                                    </Border>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
                                     <TextBlock x:Name="NoCloudUsageText" 
-                                               Text="Cloud storage billing coming soon."
+                                               Text="No cloud storage billing history found."
                                                Style="{StaticResource CaptionTextBlockStyle}"
                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                               HorizontalAlignment="Center" Margin="0,40"/>
+                                               HorizontalAlignment="Center" Margin="0,40" Visibility="Collapsed"/>
+                                    <Button x:Name="LoadMoreCloudUsageButton" Content="Load More" 
+                                            HorizontalAlignment="Center" Margin="0,12"
+                                            Visibility="Collapsed" Click="LoadMoreCloudUsage_Click"/>
                                 </StackPanel>
                             </Grid>
                         </Grid>

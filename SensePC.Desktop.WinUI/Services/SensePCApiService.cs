@@ -249,6 +249,35 @@ namespace SensePC.Desktop.WinUI.Services
             }
         }
 
+        /// <summary>
+        /// Change a user's role (admin/member)
+        /// </summary>
+        public async Task<bool> ChangeUserRoleAsync(string userId, string email, string newRole)
+        {
+            try
+            {
+                var token = await GetIdTokenAsync();
+                if (string.IsNullOrEmpty(token)) return false;
+
+                // Use PATCH for role update (or PUT depending on the API)
+                var payload = new { id = userId, email, role = newRole };
+                var jsonContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+                using var request = new HttpRequestMessage(HttpMethod.Patch, USER_MANAGEMENT_API_URL);
+                request.Headers.Add("Authorization", token);
+                request.Content = jsonContent;
+                
+                var response = await _httpClient.SendAsync(request);
+                System.Diagnostics.Debug.WriteLine($"ChangeUserRole response: {response.StatusCode}");
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ChangeUserRole error: {ex.Message}");
+                return false;
+            }
+        }
+
         #endregion
 
         /// <summary>
@@ -1362,6 +1391,43 @@ namespace SensePC.Desktop.WinUI.Services
         }
 
         /// <summary>
+        /// Get usage history with pagination response
+        /// </summary>
+        public async Task<UsageHistoryResponse?> GetUsageHistoryWithPaginationAsync(int limit = 10, string? lastEvaluatedKey = null)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                if (string.IsNullOrEmpty(idToken))
+                {
+                    return null;
+                }
+
+                var url = $"{ApiConfig.BillingUrl}usage-history?pageSize={limit}";
+                if (!string.IsNullOrEmpty(lastEvaluatedKey))
+                {
+                    url += $"&lastEvaluatedKey={Uri.EscapeDataString(lastEvaluatedKey)}";
+                }
+
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("Authorization", idToken);
+
+                var response = await _httpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<UsageHistoryResponse>(content);
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetUsageHistoryWithPagination error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Get recharge/wallet history
         /// </summary>
         public async Task<List<RechargeHistoryItem>> GetRechargeHistoryAsync(int limit = 10)
@@ -1390,6 +1456,118 @@ namespace SensePC.Desktop.WinUI.Services
             {
                 System.Diagnostics.Debug.WriteLine($"GetRechargeHistory error: {ex.Message}");
                 return new List<RechargeHistoryItem>();
+            }
+        }
+
+        /// <summary>
+        /// Get recharge/wallet history with pagination response
+        /// </summary>
+        public async Task<RechargeHistoryResponse?> GetRechargeHistoryWithPaginationAsync(int limit = 10, string? lastEvaluatedKey = null)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                if (string.IsNullOrEmpty(idToken))
+                {
+                    return null;
+                }
+
+                var url = $"{ApiConfig.BillingUrl}recharge?pageSize={limit}";
+                if (!string.IsNullOrEmpty(lastEvaluatedKey))
+                {
+                    url += $"&lastEvaluatedKey={Uri.EscapeDataString(lastEvaluatedKey)}";
+                }
+
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("Authorization", idToken);
+
+                var response = await _httpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<RechargeHistoryResponse>(content);
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetRechargeHistoryWithPagination error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Get storage usage history for cloud billing
+        /// </summary>
+        public async Task<List<StorageUsageHistoryItem>> GetStorageUsageHistoryAsync(int limit = 10, string? lastEvaluatedKey = null)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                if (string.IsNullOrEmpty(idToken))
+                {
+                    return new List<StorageUsageHistoryItem>();
+                }
+
+                var url = $"{ApiConfig.BillingUrl}usage-history/storage?pageSize={limit}";
+                if (!string.IsNullOrEmpty(lastEvaluatedKey))
+                {
+                    url += $"&lastEvaluatedKey={Uri.EscapeDataString(lastEvaluatedKey)}";
+                }
+
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("Authorization", idToken);
+
+                var response = await _httpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<StorageUsageHistoryResponse>(content);
+                    return result?.Items ?? new List<StorageUsageHistoryItem>();
+                }
+                return new List<StorageUsageHistoryItem>();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetStorageUsageHistory error: {ex.Message}");
+                return new List<StorageUsageHistoryItem>();
+            }
+        }
+
+        /// <summary>
+        /// Get storage usage history with pagination response
+        /// </summary>
+        public async Task<StorageUsageHistoryResponse?> GetStorageUsageHistoryWithPaginationAsync(int limit = 10, string? lastEvaluatedKey = null)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                if (string.IsNullOrEmpty(idToken))
+                {
+                    return null;
+                }
+
+                var url = $"{ApiConfig.BillingUrl}usage-history/storage?pageSize={limit}";
+                if (!string.IsNullOrEmpty(lastEvaluatedKey))
+                {
+                    url += $"&lastEvaluatedKey={Uri.EscapeDataString(lastEvaluatedKey)}";
+                }
+
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("Authorization", idToken);
+
+                var response = await _httpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<StorageUsageHistoryResponse>(content);
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetStorageUsageHistoryWithPagination error: {ex.Message}");
+                return null;
             }
         }
 
@@ -1924,6 +2102,14 @@ namespace SensePC.Desktop.WinUI.Services
         /// </summary>
         public async Task<bool> CreateTicketAsync(string subject, string category, string priority, string description)
         {
+            return await CreateTicketWithAttachmentsAsync(subject, category, priority, description, new List<TicketAttachment>());
+        }
+
+        /// <summary>
+        /// Create a new support ticket with attachments
+        /// </summary>
+        public async Task<bool> CreateTicketWithAttachmentsAsync(string subject, string category, string priority, string description, List<TicketAttachment> attachments)
+        {
             try
             {
                 var idToken = await GetIdTokenAsync();
@@ -1938,6 +2124,14 @@ namespace SensePC.Desktop.WinUI.Services
                 var email = ExtractClaimFromJwt(idToken, "email") ?? "";
                 var role = "owner"; // Default role
 
+                var attachmentData = attachments.Select(a => new
+                {
+                    name = a.Name,
+                    size = a.Size,
+                    type = a.Type,
+                    fileKey = a.FileKey
+                }).ToArray();
+
                 var body = new 
                 { 
                     userId,
@@ -1947,7 +2141,7 @@ namespace SensePC.Desktop.WinUI.Services
                     priority = priority.ToLower(),
                     email,
                     role,
-                    attachments = new object[] { }
+                    attachments = attachmentData
                 };
                 
                 var jsonBody = JsonSerializer.Serialize(body);
@@ -1984,6 +2178,7 @@ namespace SensePC.Desktop.WinUI.Services
                 var userId = await GetUserIdAsync();
                 if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
                 {
+                    System.Diagnostics.Debug.WriteLine("GetTicketMessages: Missing idToken or userId");
                     return new List<TicketMessage>();
                 }
 
@@ -1992,12 +2187,50 @@ namespace SensePC.Desktop.WinUI.Services
                 request.Headers.Add("x-user-id", userId);
 
                 var response = await _httpClient.SendAsync(request);
+                var content = await response.Content.ReadAsStringAsync();
+                
+                System.Diagnostics.Debug.WriteLine($"GetTicketMessages response status: {response.StatusCode}");
+                System.Diagnostics.Debug.WriteLine($"GetTicketMessages response: {content}");
+                
                 if (response.IsSuccessStatusCode)
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var result = JsonSerializer.Deserialize<TicketMessagesResponse>(content);
-                    return result?.Messages ?? new List<TicketMessage>();
+                    // Try to parse as array first (direct messages array)
+                    try
+                    {
+                        var messages = JsonSerializer.Deserialize<List<TicketMessage>>(content, new JsonSerializerOptions 
+                        { 
+                            PropertyNameCaseInsensitive = true 
+                        });
+                        if (messages != null && messages.Count > 0)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"GetTicketMessages: Parsed {messages.Count} messages as array");
+                            return messages;
+                        }
+                    }
+                    catch (JsonException)
+                    {
+                        // Not an array, try object format
+                    }
+                    
+                    // Try to parse as wrapped object { messages: [...] }
+                    try
+                    {
+                        var result = JsonSerializer.Deserialize<TicketMessagesResponse>(content, new JsonSerializerOptions 
+                        { 
+                            PropertyNameCaseInsensitive = true 
+                        });
+                        if (result?.Messages != null)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"GetTicketMessages: Parsed {result.Messages.Count} messages from object");
+                            return result.Messages;
+                        }
+                    }
+                    catch (JsonException ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"GetTicketMessages JSON parse error: {ex.Message}");
+                    }
                 }
+                
                 return new List<TicketMessage>();
             }
             catch (Exception ex)
@@ -2012,14 +2245,31 @@ namespace SensePC.Desktop.WinUI.Services
         /// </summary>
         public async Task<bool> SendTicketMessageAsync(string ticketId, string content)
         {
+            return await SendTicketMessageWithAttachmentsAsync(ticketId, content, new List<TicketAttachment>());
+        }
+
+        /// <summary>
+        /// Send a message/reply to a support ticket with attachments
+        /// </summary>
+        public async Task<bool> SendTicketMessageWithAttachmentsAsync(string ticketId, string content, List<TicketAttachment> attachments)
+        {
             try
             {
                 var idToken = await GetIdTokenAsync();
                 var userId = await GetUserIdAsync();
                 if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
                 {
+                    System.Diagnostics.Debug.WriteLine("SendTicketMessage: Missing idToken or userId");
                     return false;
                 }
+
+                var attachmentData = attachments.Select(a => new
+                {
+                    name = a.Name,
+                    size = a.Size,
+                    type = a.Type,
+                    fileKey = a.FileKey
+                }).ToArray();
 
                 var body = new
                 {
@@ -2027,10 +2277,13 @@ namespace SensePC.Desktop.WinUI.Services
                     senderType = "customer",
                     type = "message",
                     content,
-                    attachments = new object[] { }
+                    attachments = attachmentData
                 };
 
-                var jsonContent = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
+                var jsonBody = JsonSerializer.Serialize(body);
+                System.Diagnostics.Debug.WriteLine($"SendTicketMessage request to ticket/{ticketId}/message: {jsonBody}");
+                
+                var jsonContent = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
                 using var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiConfig.SupportUrl}ticket/{ticketId}/message");
                 request.Headers.Add("Authorization", idToken);
@@ -2038,11 +2291,233 @@ namespace SensePC.Desktop.WinUI.Services
                 request.Content = jsonContent;
 
                 var response = await _httpClient.SendAsync(request);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                
+                System.Diagnostics.Debug.WriteLine($"SendTicketMessage response: {response.StatusCode} - {responseContent}");
+                
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"SendTicketMessage error: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Update ticket status (e.g., mark as resolved)
+        /// </summary>
+        public async Task<bool> UpdateTicketStatusAsync(string ticketId, string status)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                {
+                    System.Diagnostics.Debug.WriteLine("UpdateTicketStatus: Missing idToken or userId");
+                    return false;
+                }
+
+                var body = new { status };
+                var jsonBody = JsonSerializer.Serialize(body);
+                System.Diagnostics.Debug.WriteLine($"UpdateTicketStatus request: {jsonBody}");
+
+                var jsonContent = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+                using var request = new HttpRequestMessage(new HttpMethod("PATCH"), $"{ApiConfig.SupportUrl}ticket/{ticketId}/status");
+                request.Headers.Add("Authorization", idToken);
+                request.Headers.Add("x-user-id", userId);
+                request.Content = jsonContent;
+
+                var response = await _httpClient.SendAsync(request);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                
+                System.Diagnostics.Debug.WriteLine($"UpdateTicketStatus response: {response.StatusCode} - {responseContent}");
+                
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"UpdateTicketStatus error: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Update ticket priority
+        /// </summary>
+        public async Task<bool> UpdateTicketPriorityAsync(string ticketId, string priority)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                {
+                    System.Diagnostics.Debug.WriteLine("UpdateTicketPriority: Missing idToken or userId");
+                    return false;
+                }
+
+                var body = new { priority };
+                var jsonBody = JsonSerializer.Serialize(body);
+                System.Diagnostics.Debug.WriteLine($"UpdateTicketPriority request: {jsonBody}");
+
+                var jsonContent = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+                using var request = new HttpRequestMessage(new HttpMethod("PATCH"), $"{ApiConfig.SupportUrl}ticket/{ticketId}/priority");
+                request.Headers.Add("Authorization", idToken);
+                request.Headers.Add("x-user-id", userId);
+                request.Content = jsonContent;
+
+                var response = await _httpClient.SendAsync(request);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                
+                System.Diagnostics.Debug.WriteLine($"UpdateTicketPriority response: {response.StatusCode} - {responseContent}");
+                
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"UpdateTicketPriority error: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Get presigned upload URL for ticket attachment (existing ticket)
+        /// </summary>
+        public async Task<TicketAttachmentUploadResponse?> PresignTicketUploadAsync(string ticketId, string fileName, string fileType, long fileSize)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                {
+                    return null;
+                }
+
+                var body = new { fileName, fileType, fileSize };
+                var jsonBody = JsonSerializer.Serialize(body);
+                var jsonContent = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+                using var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiConfig.SupportUrl}ticket/{ticketId}/presign-upload");
+                request.Headers.Add("Authorization", idToken);
+                request.Headers.Add("x-user-id", userId);
+                request.Content = jsonContent;
+
+                var response = await _httpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<TicketAttachmentUploadResponse>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PresignTicketUpload error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Get presigned upload URL for new ticket attachment (before ticket exists)
+        /// </summary>
+        public async Task<TicketAttachmentUploadResponse?> PresignTicketUpload2Async(string fileName, string fileType, long fileSize)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                {
+                    return null;
+                }
+
+                var body = new { fileName, fileType, fileSize };
+                var jsonBody = JsonSerializer.Serialize(body);
+                var jsonContent = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+                using var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiConfig.SupportUrl}presign-upload-2");
+                request.Headers.Add("Authorization", idToken);
+                request.Headers.Add("x-user-id", userId);
+                request.Content = jsonContent;
+
+                var response = await _httpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<TicketAttachmentUploadResponse>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PresignTicketUpload2 error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Get presigned download URL for ticket attachment
+        /// </summary>
+        public async Task<string?> PresignTicketDownloadAsync(string ticketId, string fileKey)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                var userId = await GetUserIdAsync();
+                if (string.IsNullOrEmpty(idToken) || string.IsNullOrEmpty(userId))
+                {
+                    return null;
+                }
+
+                var body = new { fileKey };
+                var jsonBody = JsonSerializer.Serialize(body);
+                var jsonContent = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+                using var request = new HttpRequestMessage(HttpMethod.Post, $"{ApiConfig.SupportUrl}ticket/{ticketId}/presign-download");
+                request.Headers.Add("Authorization", idToken);
+                request.Headers.Add("x-user-id", userId);
+                request.Content = jsonContent;
+
+                var response = await _httpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<JsonElement>(content);
+                    if (result.TryGetProperty("downloadUrl", out var urlProp))
+                    {
+                        return urlProp.GetString();
+                    }
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"PresignTicketDownload error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Upload file to presigned URL (for ticket attachments)
+        /// </summary>
+        public async Task<bool> UploadToTicketPresignedUrlAsync(string uploadUrl, byte[] fileData, string contentType)
+        {
+            try
+            {
+                var content = new ByteArrayContent(fileData);
+                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+
+                var response = await _httpClient.PutAsync(uploadUrl, content);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"UploadToTicketPresignedUrl error: {ex.Message}");
                 return false;
             }
         }
@@ -3164,6 +3639,9 @@ namespace SensePC.Desktop.WinUI.Services
 
         [System.Text.Json.Serialization.JsonPropertyName("hasMore")]
         public bool HasMore { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("lastEvaluatedKey")]
+        public string? LastEvaluatedKey { get; set; }
     }
 
     /// <summary>
@@ -3210,6 +3688,80 @@ namespace SensePC.Desktop.WinUI.Services
 
         [System.Text.Json.Serialization.JsonPropertyName("hasMore")]
         public bool HasMore { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("lastEvaluatedKey")]
+        public string? LastEvaluatedKey { get; set; }
+    }
+
+    /// <summary>
+    /// Storage usage history item for cloud storage billing
+    /// </summary>
+    public class StorageUsageHistoryItem
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+        public string Timestamp { get; set; } = "";
+
+        [System.Text.Json.Serialization.JsonPropertyName("billingAmount")]
+        public string BillingAmountStr { get; set; } = "0";
+
+        [System.Text.Json.Serialization.JsonPropertyName("billingPlan")]
+        public string BillingPlan { get; set; } = "";
+
+        [System.Text.Json.Serialization.JsonPropertyName("startTime")]
+        public string StartTime { get; set; } = "";
+
+        [System.Text.Json.Serialization.JsonPropertyName("endTime")]
+        public string EndTime { get; set; } = "";
+
+        [System.Text.Json.Serialization.JsonPropertyName("maxStorage")]
+        public string MaxStorageStr { get; set; } = "0";
+
+        [System.Text.Json.Serialization.JsonPropertyName("cashback")]
+        public string CashbackStr { get; set; } = "0";
+
+        public decimal BillingAmount => decimal.TryParse(BillingAmountStr, out var amt) ? amt : 0;
+        public double MaxStorageBytes => double.TryParse(MaxStorageStr, out var bytes) ? bytes : 0;
+        public string MaxStorageDisplay => FormatStorageSize(MaxStorageBytes);
+        public decimal Cashback => decimal.TryParse(CashbackStr, out var amt) ? amt : 0;
+
+        public string FormattedDate => !string.IsNullOrEmpty(Timestamp) && DateTime.TryParse(Timestamp, out var dt)
+            ? dt.ToString("MMM dd, yyyy")
+            : Timestamp;
+
+        public string DateRangeDisplay
+        {
+            get
+            {
+                var start = DateTime.TryParse(StartTime, out var s) ? s.ToString("MMM dd") : StartTime;
+                var end = DateTime.TryParse(EndTime, out var e) ? e.ToString("MMM dd, yyyy") : EndTime;
+                return $"{start} - {end}";
+            }
+        }
+
+        public string AmountDisplay => $"${BillingAmount:N2}";
+
+        private static string FormatStorageSize(double bytes)
+        {
+            if (bytes >= 1_073_741_824) return $"{bytes / 1_073_741_824:N1} GB";
+            if (bytes >= 1_048_576) return $"{bytes / 1_048_576:N1} MB";
+            if (bytes >= 1_024) return $"{bytes / 1_024:N1} KB";
+            return $"{bytes:N0} bytes";
+        }
+    }
+
+    /// <summary>
+    /// Storage usage history API response wrapper
+    /// </summary>
+    public class StorageUsageHistoryResponse
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("items")]
+        public List<StorageUsageHistoryItem>? Items { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("hasMore")]
+        public bool HasMore { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("lastEvaluatedKey")]
+        public string? LastEvaluatedKey { get; set; }
     }
 
     /// <summary>
@@ -3353,6 +3905,30 @@ namespace SensePC.Desktop.WinUI.Services
 
         [System.Text.Json.Serialization.JsonPropertyName("email")]
         public string? Email { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("role")]
+        public string? Role { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("attachments")]
+        public List<TicketAttachment>? Attachments { get; set; }
+    }
+
+    /// <summary>
+    /// Ticket attachment model
+    /// </summary>
+    public class TicketAttachment
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("name")]
+        public string Name { get; set; } = "";
+
+        [System.Text.Json.Serialization.JsonPropertyName("size")]
+        public string Size { get; set; } = "";
+
+        [System.Text.Json.Serialization.JsonPropertyName("type")]
+        public string Type { get; set; } = "";
+
+        [System.Text.Json.Serialization.JsonPropertyName("fileKey")]
+        public string FileKey { get; set; } = "";
     }
 
     /// <summary>
@@ -3372,11 +3948,17 @@ namespace SensePC.Desktop.WinUI.Services
         [System.Text.Json.Serialization.JsonPropertyName("senderName")]
         public string? SenderName { get; set; }
 
+        [System.Text.Json.Serialization.JsonPropertyName("type")]
+        public string? Type { get; set; }
+
         [System.Text.Json.Serialization.JsonPropertyName("content")]
         public string Content { get; set; } = "";
 
         [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
         public string Timestamp { get; set; } = "";
+
+        [System.Text.Json.Serialization.JsonPropertyName("attachments")]
+        public List<TicketAttachment>? Attachments { get; set; }
     }
 
     /// <summary>
@@ -3395,6 +3977,18 @@ namespace SensePC.Desktop.WinUI.Services
     {
         [System.Text.Json.Serialization.JsonPropertyName("messages")]
         public List<TicketMessage>? Messages { get; set; }
+    }
+
+    /// <summary>
+    /// Ticket attachment upload presigned URL response
+    /// </summary>
+    public class TicketAttachmentUploadResponse
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("uploadUrl")]
+        public string UploadUrl { get; set; } = "";
+
+        [System.Text.Json.Serialization.JsonPropertyName("fileKey")]
+        public string FileKey { get; set; } = "";
     }
 
     /// <summary>

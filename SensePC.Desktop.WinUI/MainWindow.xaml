@@ -87,6 +87,9 @@
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xEA8F;"/>
                     </NavigationViewItem.Icon>
+                    <NavigationViewItem.InfoBadge>
+                        <InfoBadge x:Name="NotificationBadge" Value="0" Visibility="Collapsed"/>
+                    </NavigationViewItem.InfoBadge>
                 </NavigationViewItem>
 
                 <NavigationViewItem x:Name="NavSettings" Content="Settings" Tag="Settings">

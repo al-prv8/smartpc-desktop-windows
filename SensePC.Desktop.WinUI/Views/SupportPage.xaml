@@ -79,17 +79,42 @@
                                     <DataTemplate>
                                         <Grid Padding="16,12">
                                             <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="100"/>
+                                                <ColumnDefinition Width="80"/>
                                                 <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="120"/>
+                                                <ColumnDefinition Width="100"/>
                                             </Grid.ColumnDefinitions>
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="{Binding Subject}" FontWeight="SemiBold"/>
-                                                <TextBlock Text="{Binding TicketId}" FontSize="12" Opacity="0.6"/>
+                                            
+                                            <!-- Created Date -->
+                                            <TextBlock Grid.Column="0" Text="{Binding CreatedAtDisplay}" 
+                                                       FontSize="12" Opacity="0.7" VerticalAlignment="Center"/>
+                                            
+                                            <!-- Ticket ID -->
+                                            <TextBlock Grid.Column="1" Text="{Binding ShortTicketId}" 
+                                                       FontSize="12" Opacity="0.6" VerticalAlignment="Center"/>
+                                            
+                                            <!-- Subject and Email -->
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Subject}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding Email}" FontSize="11" Opacity="0.6" TextTrimming="CharacterEllipsis"/>
                                             </StackPanel>
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                                <TextBlock Text="{Binding Status}" FontSize="12"/>
-                                                <TextBlock Text="{Binding CreatedAtDisplay}" FontSize="11" Opacity="0.6"/>
-                                            </StackPanel>
+                                            
+                                            <!-- Last Activity -->
+                                            <TextBlock Grid.Column="3" Text="{Binding LastActivityDisplay}" 
+                                                       FontSize="12" Opacity="0.7" VerticalAlignment="Center"
+                                                       HorizontalAlignment="Center"/>
+                                            
+                                            <!-- Status Badge -->
+                                            <Border Grid.Column="4" 
+                                                    Background="{Binding StatusBackground}"
+                                                    CornerRadius="4" Padding="8,4"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding StatusDisplay}" 
+                                                           FontSize="11" FontWeight="SemiBold"
+                                                           Foreground="{Binding StatusForeground}"/>
+                                            </Border>
                                         </Grid>
                                     </DataTemplate>
                                 </ListView.ItemTemplate>

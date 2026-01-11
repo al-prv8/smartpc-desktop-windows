@@ -572,6 +572,7 @@ namespace SensePC.Desktop.WinUI.Views
             else if (CloudUsageTab.IsChecked == true)
             {
                 CloudUsageHistoryPanel.Visibility = Visibility.Visible;
+                await LoadCloudUsageHistoryAsync();
             }
         }
 
@@ -764,18 +765,138 @@ namespace SensePC.Desktop.WinUI.Views
 
         #region Helper Methods
 
+        // Pagination state for history tabs
+        private List<RechargeHistoryItem> _rechargeHistory = new();
+        private List<UsageHistoryItem> _pcUsageHistory = new();
+        private List<StorageUsageHistoryItem> _cloudUsageHistory = new();
+        private string? _rechargeLastKey;
+        private string? _pcUsageLastKey;
+        private string? _cloudUsageLastKey;
+        private bool _hasMoreRecharge;
+        private bool _hasMorePCUsage;
+        private bool _hasMoreCloudUsage;
+
         private async System.Threading.Tasks.Task LoadRechargeHistoryAsync()
         {
-            var recharges = await _apiService.GetRechargeHistoryAsync(20);
-            RechargeListView.ItemsSource = recharges;
-            NoRechargeText.Visibility = recharges.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            _rechargeHistory.Clear();
+            _rechargeLastKey = null;
+            
+            var response = await _apiService.GetRechargeHistoryWithPaginationAsync(20);
+            if (response != null)
+            {
+                _rechargeHistory = response.History?.ToList() ?? new List<RechargeHistoryItem>();
+                _rechargeLastKey = response.LastEvaluatedKey;
+                _hasMoreRecharge = response.HasMore;
+            }
+            
+            RechargeListView.ItemsSource = _rechargeHistory;
+            NoRechargeText.Visibility = _rechargeHistory.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            LoadMoreRechargeButton.Visibility = _hasMoreRecharge ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private async void LoadMoreRecharge_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_hasMoreRecharge || string.IsNullOrEmpty(_rechargeLastKey)) return;
+            
+            LoadMoreRechargeButton.IsEnabled = false;
+            LoadMoreRechargeButton.Content = "Loading...";
+            
+            var response = await _apiService.GetRechargeHistoryWithPaginationAsync(20, _rechargeLastKey);
+            if (response?.History != null)
+            {
+                _rechargeHistory.AddRange(response.History);
+                _rechargeLastKey = response.LastEvaluatedKey;
+                _hasMoreRecharge = response.HasMore;
+                
+                RechargeListView.ItemsSource = null;
+                RechargeListView.ItemsSource = _rechargeHistory;
+            }
+            
+            LoadMoreRechargeButton.Content = "Load More";
+            LoadMoreRechargeButton.IsEnabled = true;
+            LoadMoreRechargeButton.Visibility = _hasMoreRecharge ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private async System.Threading.Tasks.Task LoadPCUsageHistoryAsync()
         {
-            var usages = await _apiService.GetUsageHistoryAsync(20);
-            PCUsageListView.ItemsSource = usages;
-            NoPCUsageText.Visibility = usages.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            _pcUsageHistory.Clear();
+            _pcUsageLastKey = null;
+            
+            var response = await _apiService.GetUsageHistoryWithPaginationAsync(20);
+            if (response != null)
+            {
+                _pcUsageHistory = response.Items?.ToList() ?? new List<UsageHistoryItem>();
+                _pcUsageLastKey = response.LastEvaluatedKey;
+                _hasMorePCUsage = response.HasMore;
+            }
+            
+            PCUsageListView.ItemsSource = _pcUsageHistory;
+            NoPCUsageText.Visibility = _pcUsageHistory.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            LoadMorePCUsageButton.Visibility = _hasMorePCUsage ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private async void LoadMorePCUsage_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_hasMorePCUsage || string.IsNullOrEmpty(_pcUsageLastKey)) return;
+            
+            LoadMorePCUsageButton.IsEnabled = false;
+            LoadMorePCUsageButton.Content = "Loading...";
+            
+            var response = await _apiService.GetUsageHistoryWithPaginationAsync(20, _pcUsageLastKey);
+            if (response?.Items != null)
+            {
+                _pcUsageHistory.AddRange(response.Items);
+                _pcUsageLastKey = response.LastEvaluatedKey;
+                _hasMorePCUsage = response.HasMore;
+                
+                PCUsageListView.ItemsSource = null;
+                PCUsageListView.ItemsSource = _pcUsageHistory;
+            }
+            
+            LoadMorePCUsageButton.Content = "Load More";
+            LoadMorePCUsageButton.IsEnabled = true;
+            LoadMorePCUsageButton.Visibility = _hasMorePCUsage ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private async System.Threading.Tasks.Task LoadCloudUsageHistoryAsync()
+        {
+            _cloudUsageHistory.Clear();
+            _cloudUsageLastKey = null;
+            
+            var response = await _apiService.GetStorageUsageHistoryWithPaginationAsync(20);
+            if (response != null)
+            {
+                _cloudUsageHistory = response.Items?.ToList() ?? new List<StorageUsageHistoryItem>();
+                _cloudUsageLastKey = response.LastEvaluatedKey;
+                _hasMoreCloudUsage = response.HasMore;
+            }
+            
+            CloudUsageListView.ItemsSource = _cloudUsageHistory;
+            NoCloudUsageText.Visibility = _cloudUsageHistory.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            LoadMoreCloudUsageButton.Visibility = _hasMoreCloudUsage ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private async void LoadMoreCloudUsage_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_hasMoreCloudUsage || string.IsNullOrEmpty(_cloudUsageLastKey)) return;
+            
+            LoadMoreCloudUsageButton.IsEnabled = false;
+            LoadMoreCloudUsageButton.Content = "Loading...";
+            
+            var response = await _apiService.GetStorageUsageHistoryWithPaginationAsync(20, _cloudUsageLastKey);
+            if (response?.Items != null)
+            {
+                _cloudUsageHistory.AddRange(response.Items);
+                _cloudUsageLastKey = response.LastEvaluatedKey;
+                _hasMoreCloudUsage = response.HasMore;
+                
+                CloudUsageListView.ItemsSource = null;
+                CloudUsageListView.ItemsSource = _cloudUsageHistory;
+            }
+            
+            LoadMoreCloudUsageButton.Content = "Load More";
+            LoadMoreCloudUsageButton.IsEnabled = true;
+            LoadMoreCloudUsageButton.Visibility = _hasMoreCloudUsage ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private async System.Threading.Tasks.Task ShowErrorDialogAsync(string message)

@@ -7,41 +7,92 @@
     mc:Ignorable="d"
     Background="Transparent">
 
-    <ScrollViewer>
-        <Grid Padding="32">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+    <Grid Padding="32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-            <!-- Header -->
-            <StackPanel Grid.Row="0" Margin="0,0,0,24">
-                <TextBlock Text="Settings" 
-                           Style="{StaticResource TitleTextBlockStyle}"
-                           Margin="0,0,0,4"/>
-                <TextBlock Text="Configure app preferences and behavior" 
-                           Style="{StaticResource BodyTextBlockStyle}"
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-            </StackPanel>
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,24">
+            <TextBlock Text="Settings" 
+                       Style="{StaticResource TitleTextBlockStyle}"
+                       Margin="0,0,0,4"/>
+            <TextBlock Text="Configure app preferences and behavior" 
+                       Style="{StaticResource BodyTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </StackPanel>
 
-            <!-- Settings Tabs -->
-            <Pivot x:Name="SettingsPivot" Grid.Row="1">
-                <!-- General Tab -->
-                <PivotItem>
-                    <PivotItem.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="260"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Sidebar Navigation -->
+            <Border Grid.Column="0" 
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Margin="0,0,16,0">
+                <ListView x:Name="SettingsNavList" 
+                          SelectionMode="Single"
+                          SelectionChanged="SettingsNavList_SelectionChanged"
+                          Padding="8">
+                    <ListViewItem Tag="General" IsSelected="True">
+                        <StackPanel Orientation="Horizontal" Spacing="12" Padding="4">
                             <FontIcon Glyph="&#xE713;" FontSize="16"/>
-                            <TextBlock Text="General"/>
+                            <TextBlock Text="General" VerticalAlignment="Center"/>
                         </StackPanel>
-                    </PivotItem.Header>
+                    </ListViewItem>
+                    <ListViewItem Tag="Appearance">
+                        <StackPanel Orientation="Horizontal" Spacing="12" Padding="4">
+                            <FontIcon Glyph="&#xE790;" FontSize="16"/>
+                            <TextBlock Text="Appearance" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ListViewItem>
+                    <ListViewItem Tag="Security">
+                        <StackPanel Orientation="Horizontal" Spacing="12" Padding="4">
+                            <FontIcon Glyph="&#xE72E;" FontSize="16"/>
+                            <TextBlock Text="Security" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ListViewItem>
+                    <ListViewItem Tag="Advanced">
+                        <StackPanel Orientation="Horizontal" Spacing="12" Padding="4">
+                            <FontIcon Glyph="&#xE90F;" FontSize="16"/>
+                            <TextBlock Text="Advanced" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ListViewItem>
+                </ListView>
+            </Border>
+
+            <!-- Settings Content -->
+            <ScrollViewer Grid.Column="1">
+                <Grid x:Name="SettingsContentPanel">
                     
-                    <StackPanel Spacing="24" Margin="0,24,0,0" MaxWidth="600" HorizontalAlignment="Left">
+                    <!-- General Settings Panel -->
+                    <StackPanel x:Name="GeneralPanel" Spacing="16" Visibility="Visible">
                         <!-- General Settings Card -->
                         <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                 BorderThickness="1" CornerRadius="8" Padding="24">
-                            <StackPanel Spacing="20">
-                                <StackPanel Spacing="4">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Header -->
+                                <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Spacing="4" Margin="0,0,0,20">
                                     <TextBlock Text="General Settings" Style="{StaticResource SubtitleTextBlockStyle}"/>
                                     <TextBlock Text="Manage general account preferences"
                                                Style="{StaticResource CaptionTextBlockStyle}"
@@ -49,68 +100,73 @@
                                 </StackPanel>
 
                                 <!-- Language -->
-                                <StackPanel Spacing="8">
+                                <StackPanel Grid.Row="1" Spacing="4" Margin="0,0,0,16">
                                     <TextBlock Text="Language" Style="{StaticResource BodyStrongTextBlockStyle}"/>
-                                    <ComboBox x:Name="LanguageComboBox" HorizontalAlignment="Stretch" Width="300">
-                                        <ComboBoxItem Content="English" IsSelected="True"/>
-                                        <ComboBoxItem Content="French"/>
-                                        <ComboBoxItem Content="German"/>
-                                        <ComboBoxItem Content="Spanish"/>
-                                        <ComboBoxItem Content="Japanese"/>
-                                    </ComboBox>
+                                    <TextBlock Text="Select your preferred language"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                 </StackPanel>
+                                <ComboBox x:Name="LanguageComboBox" Grid.Row="1" Grid.Column="1" Width="220" VerticalAlignment="Center">
+                                    <ComboBoxItem Content="English" IsSelected="True"/>
+                                    <ComboBoxItem Content="French"/>
+                                    <ComboBoxItem Content="German"/>
+                                    <ComboBoxItem Content="Spanish"/>
+                                    <ComboBoxItem Content="Japanese"/>
+                                </ComboBox>
 
                                 <!-- Time Zone -->
-                                <StackPanel Spacing="8">
+                                <StackPanel Grid.Row="2" Spacing="4" Margin="0,0,0,16">
                                     <TextBlock Text="Time Zone" Style="{StaticResource BodyStrongTextBlockStyle}"/>
-                                    <ComboBox x:Name="TimeZoneComboBox" HorizontalAlignment="Stretch" Width="300">
-                                        <ComboBoxItem Content="Pacific Time (UTC-8)"/>
-                                        <ComboBoxItem Content="Mountain Time (UTC-7)"/>
-                                        <ComboBoxItem Content="Central Time (UTC-6)"/>
-                                        <ComboBoxItem Content="Eastern Time (UTC-5)" IsSelected="True"/>
-                                        <ComboBoxItem Content="UTC"/>
-                                        <ComboBoxItem Content="Central European Time (UTC+1)"/>
-                                    </ComboBox>
+                                    <TextBlock Text="Set your local time zone"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                 </StackPanel>
+                                <ComboBox x:Name="TimeZoneComboBox" Grid.Row="2" Grid.Column="1" Width="220" VerticalAlignment="Center">
+                                    <ComboBoxItem Content="Pacific Time (UTC-8)"/>
+                                    <ComboBoxItem Content="Mountain Time (UTC-7)"/>
+                                    <ComboBoxItem Content="Central Time (UTC-6)"/>
+                                    <ComboBoxItem Content="Eastern Time (UTC-5)" IsSelected="True"/>
+                                    <ComboBoxItem Content="UTC"/>
+                                    <ComboBoxItem Content="Central European Time (UTC+1)"/>
+                                </ComboBox>
 
                                 <!-- Activity Status -->
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Spacing="4">
-                                        <TextBlock Text="Activity Status" Style="{StaticResource BodyStrongTextBlockStyle}"/>
-                                        <TextBlock Text="Show when you're active"
-                                                   Style="{StaticResource CaptionTextBlockStyle}"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                    </StackPanel>
-                                    <ToggleSwitch x:Name="ActivityStatusToggle" Grid.Column="1" IsOn="True" OnContent="" OffContent=""/>
-                                </Grid>
+                                <StackPanel Grid.Row="3" Spacing="4" Margin="0,0,0,16">
+                                    <TextBlock Text="Activity Status" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                                    <TextBlock Text="Show when you're active"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                </StackPanel>
+                                <ToggleSwitch x:Name="ActivityStatusToggle" Grid.Row="3" Grid.Column="1" IsOn="True" OnContent="" OffContent="" VerticalAlignment="Center"/>
 
                                 <!-- Sound Effects -->
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Spacing="4">
-                                        <TextBlock Text="Sound Effects" Style="{StaticResource BodyStrongTextBlockStyle}"/>
-                                        <TextBlock Text="Play sounds for notifications and actions"
-                                                   Style="{StaticResource CaptionTextBlockStyle}"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                    </StackPanel>
-                                    <ToggleSwitch x:Name="SoundEffectsToggle" Grid.Column="1" IsOn="True" OnContent="" OffContent=""/>
-                                </Grid>
-                            </StackPanel>
+                                <StackPanel Grid.Row="4" Spacing="4">
+                                    <TextBlock Text="Sound Effects" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                                    <TextBlock Text="Play sounds for notifications and actions"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                </StackPanel>
+                                <ToggleSwitch x:Name="SoundEffectsToggle" Grid.Row="4" Grid.Column="1" IsOn="True" OnContent="" OffContent="" VerticalAlignment="Center"/>
+                            </Grid>
                         </Border>
 
                         <!-- Session Settings Card -->
                         <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                 BorderThickness="1" CornerRadius="8" Padding="24">
-                            <StackPanel Spacing="20">
-                                <StackPanel Spacing="4">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Header -->
+                                <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Spacing="4" Margin="0,0,0,20">
                                     <TextBlock Text="Session Settings" Style="{StaticResource SubtitleTextBlockStyle}"/>
                                     <TextBlock Text="Manage your session preferences"
                                                Style="{StaticResource CaptionTextBlockStyle}"
@@ -118,54 +174,38 @@
                                 </StackPanel>
 
                                 <!-- Session Timeout -->
-                                <StackPanel Spacing="8">
+                                <StackPanel Grid.Row="1" Spacing="4" Margin="0,0,0,16">
                                     <TextBlock Text="Session Timeout" Style="{StaticResource BodyStrongTextBlockStyle}"/>
-                                    <ComboBox x:Name="SessionTimeoutComboBox" HorizontalAlignment="Stretch" Width="300">
-                                        <ComboBoxItem Content="15 minutes"/>
-                                        <ComboBoxItem Content="30 minutes" IsSelected="True"/>
-                                        <ComboBoxItem Content="1 hour"/>
-                                        <ComboBoxItem Content="2 hours"/>
-                                        <ComboBoxItem Content="Never"/>
-                                    </ComboBox>
                                     <TextBlock Text="Your smart PC will hibernate after this period of inactivity"
                                                Style="{StaticResource CaptionTextBlockStyle}"
                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                 </StackPanel>
+                                <ComboBox x:Name="SessionTimeoutComboBox" Grid.Row="1" Grid.Column="1" Width="220" VerticalAlignment="Center">
+                                    <ComboBoxItem Content="15 minutes"/>
+                                    <ComboBoxItem Content="30 minutes" IsSelected="True"/>
+                                    <ComboBoxItem Content="1 hour"/>
+                                    <ComboBoxItem Content="2 hours"/>
+                                    <ComboBoxItem Content="Never"/>
+                                </ComboBox>
 
                                 <!-- Auto Reconnect -->
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Spacing="4">
-                                        <TextBlock Text="Automatic Reconnect" Style="{StaticResource BodyStrongTextBlockStyle}"/>
-                                        <TextBlock Text="Automatically reconnect if connection is lost"
-                                                   Style="{StaticResource CaptionTextBlockStyle}"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                    </StackPanel>
-                                    <ToggleSwitch x:Name="AutoReconnectToggle" Grid.Column="1" IsOn="True" OnContent="" OffContent=""/>
-                                </Grid>
-                            </StackPanel>
+                                <StackPanel Grid.Row="2" Spacing="4">
+                                    <TextBlock Text="Automatic Reconnect" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                                    <TextBlock Text="Automatically reconnect if connection is lost"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                </StackPanel>
+                                <ToggleSwitch x:Name="AutoReconnectToggle" Grid.Row="2" Grid.Column="1" IsOn="True" OnContent="" OffContent="" VerticalAlignment="Center"/>
+                            </Grid>
                         </Border>
                     </StackPanel>
-                </PivotItem>
 
-                <!-- Appearance Tab -->
-                <PivotItem>
-                    <PivotItem.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon Glyph="&#xE790;" FontSize="16"/>
-                            <TextBlock Text="Appearance"/>
-                        </StackPanel>
-                    </PivotItem.Header>
-                    
-                    <StackPanel Spacing="24" Margin="0,24,0,0" MaxWidth="600" HorizontalAlignment="Left">
-                        <!-- Appearance Card -->
+                    <!-- Appearance Panel -->
+                    <StackPanel x:Name="AppearancePanel" Spacing="16" Visibility="Collapsed">
                         <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                 BorderThickness="1" CornerRadius="8" Padding="24">
-                            <StackPanel Spacing="20">
+                            <StackPanel Spacing="24">
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Appearance" Style="{StaticResource SubtitleTextBlockStyle}"/>
                                     <TextBlock Text="Customize the look and feel"
@@ -176,31 +216,37 @@
                                 <!-- Theme -->
                                 <StackPanel Spacing="12">
                                     <TextBlock Text="Theme" Style="{StaticResource BodyStrongTextBlockStyle}"/>
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <StackPanel Orientation="Horizontal" Spacing="16">
                                         <RadioButton x:Name="DarkThemeRadio" GroupName="Theme" IsChecked="True">
-                                            <StackPanel Spacing="8" Width="100">
-                                                <Border Background="#1a1a1a" CornerRadius="6" Height="60" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"/>
-                                                <TextBlock Text="Dark" HorizontalAlignment="Center"/>
-                                            </StackPanel>
+                                            <Border Padding="16" CornerRadius="8" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                                <StackPanel Spacing="12" HorizontalAlignment="Center">
+                                                    <Border Background="#1a1a1a" CornerRadius="6" Width="80" Height="50"/>
+                                                    <TextBlock Text="Dark" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
                                         </RadioButton>
                                         <RadioButton x:Name="LightThemeRadio" GroupName="Theme">
-                                            <StackPanel Spacing="8" Width="100">
-                                                <Border Background="White" CornerRadius="6" Height="60" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"/>
-                                                <TextBlock Text="Light" HorizontalAlignment="Center"/>
-                                            </StackPanel>
+                                            <Border Padding="16" CornerRadius="8" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                                <StackPanel Spacing="12" HorizontalAlignment="Center">
+                                                    <Border Background="White" CornerRadius="6" Width="80" Height="50"/>
+                                                    <TextBlock Text="Light" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
                                         </RadioButton>
                                         <RadioButton x:Name="SystemThemeRadio" GroupName="Theme">
-                                            <StackPanel Spacing="8" Width="100">
-                                                <Border CornerRadius="6" Height="60" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                                                    <Border.Background>
-                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                            <GradientStop Color="#1a1a1a" Offset="0"/>
-                                                            <GradientStop Color="White" Offset="1"/>
-                                                        </LinearGradientBrush>
-                                                    </Border.Background>
-                                                </Border>
-                                                <TextBlock Text="System" HorizontalAlignment="Center"/>
-                                            </StackPanel>
+                                            <Border Padding="16" CornerRadius="8" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                                <StackPanel Spacing="12" HorizontalAlignment="Center">
+                                                    <Border CornerRadius="6" Width="80" Height="50">
+                                                        <Border.Background>
+                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                                <GradientStop Color="#1a1a1a" Offset="0"/>
+                                                                <GradientStop Color="White" Offset="1"/>
+                                                            </LinearGradientBrush>
+                                                        </Border.Background>
+                                                    </Border>
+                                                    <TextBlock Text="System" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
                                         </RadioButton>
                                     </StackPanel>
                                 </StackPanel>
@@ -208,36 +254,24 @@
                                 <!-- Accent Color -->
                                 <StackPanel Spacing="12">
                                     <TextBlock Text="Accent Color" Style="{StaticResource BodyStrongTextBlockStyle}"/>
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <RadioButton x:Name="BlueAccentRadio" GroupName="AccentColor" IsChecked="True" Width="40" Height="40" Padding="0">
-                                            <RadioButton.Content>
-                                                <Ellipse Width="32" Height="32" Fill="#3B82F6"/>
-                                            </RadioButton.Content>
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <RadioButton x:Name="BlueAccentRadio" GroupName="AccentColor" IsChecked="True" MinWidth="0" Padding="4">
+                                            <Ellipse Width="36" Height="36" Fill="#3B82F6"/>
                                         </RadioButton>
-                                        <RadioButton x:Name="PurpleAccentRadio" GroupName="AccentColor" Width="40" Height="40" Padding="0">
-                                            <RadioButton.Content>
-                                                <Ellipse Width="32" Height="32" Fill="#8B5CF6"/>
-                                            </RadioButton.Content>
+                                        <RadioButton x:Name="PurpleAccentRadio" GroupName="AccentColor" MinWidth="0" Padding="4">
+                                            <Ellipse Width="36" Height="36" Fill="#8B5CF6"/>
                                         </RadioButton>
-                                        <RadioButton x:Name="GreenAccentRadio" GroupName="AccentColor" Width="40" Height="40" Padding="0">
-                                            <RadioButton.Content>
-                                                <Ellipse Width="32" Height="32" Fill="#22C55E"/>
-                                            </RadioButton.Content>
+                                        <RadioButton x:Name="GreenAccentRadio" GroupName="AccentColor" MinWidth="0" Padding="4">
+                                            <Ellipse Width="36" Height="36" Fill="#22C55E"/>
                                         </RadioButton>
-                                        <RadioButton x:Name="OrangeAccentRadio" GroupName="AccentColor" Width="40" Height="40" Padding="0">
-                                            <RadioButton.Content>
-                                                <Ellipse Width="32" Height="32" Fill="#F97316"/>
-                                            </RadioButton.Content>
+                                        <RadioButton x:Name="OrangeAccentRadio" GroupName="AccentColor" MinWidth="0" Padding="4">
+                                            <Ellipse Width="36" Height="36" Fill="#F97316"/>
                                         </RadioButton>
-                                        <RadioButton x:Name="PinkAccentRadio" GroupName="AccentColor" Width="40" Height="40" Padding="0">
-                                            <RadioButton.Content>
-                                                <Ellipse Width="32" Height="32" Fill="#EC4899"/>
-                                            </RadioButton.Content>
+                                        <RadioButton x:Name="PinkAccentRadio" GroupName="AccentColor" MinWidth="0" Padding="4">
+                                            <Ellipse Width="36" Height="36" Fill="#EC4899"/>
                                         </RadioButton>
-                                        <RadioButton x:Name="RedAccentRadio" GroupName="AccentColor" Width="40" Height="40" Padding="0">
-                                            <RadioButton.Content>
-                                                <Ellipse Width="32" Height="32" Fill="#EF4444"/>
-                                            </RadioButton.Content>
+                                        <RadioButton x:Name="RedAccentRadio" GroupName="AccentColor" MinWidth="0" Padding="4">
+                                            <Ellipse Width="36" Height="36" Fill="#EF4444"/>
                                         </RadioButton>
                                     </StackPanel>
                                 </StackPanel>
@@ -254,7 +288,7 @@
                                                    Style="{StaticResource CaptionTextBlockStyle}"
                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                     </StackPanel>
-                                    <ToggleSwitch x:Name="ReducedMotionToggle" Grid.Column="1" IsOn="False" OnContent="" OffContent=""/>
+                                    <ToggleSwitch x:Name="ReducedMotionToggle" Grid.Column="1" IsOn="False" OnContent="" OffContent="" HorizontalAlignment="Right"/>
                                 </Grid>
 
                                 <!-- Reduce Transparency -->
@@ -269,28 +303,18 @@
                                                    Style="{StaticResource CaptionTextBlockStyle}"
                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                     </StackPanel>
-                                    <ToggleSwitch x:Name="ReduceTransparencyToggle" Grid.Column="1" IsOn="False" OnContent="" OffContent=""/>
+                                    <ToggleSwitch x:Name="ReduceTransparencyToggle" Grid.Column="1" IsOn="False" OnContent="" OffContent="" HorizontalAlignment="Right"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
                     </StackPanel>
-                </PivotItem>
 
-                <!-- Security Tab -->
-                <PivotItem>
-                    <PivotItem.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon Glyph="&#xE72E;" FontSize="16"/>
-                            <TextBlock Text="Security"/>
-                        </StackPanel>
-                    </PivotItem.Header>
-                    
-                    <StackPanel Spacing="24" Margin="0,24,0,0" MaxWidth="600" HorizontalAlignment="Left">
-                        <!-- Security Settings Card -->
+                    <!-- Security Panel -->
+                    <StackPanel x:Name="SecurityPanel" Spacing="16" Visibility="Collapsed">
                         <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                 BorderThickness="1" CornerRadius="8" Padding="24">
-                            <StackPanel Spacing="20">
+                            <StackPanel Spacing="24">
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Security Settings" Style="{StaticResource SubtitleTextBlockStyle}"/>
                                     <TextBlock Text="Manage your security preferences"
@@ -320,10 +344,10 @@
                                                    Style="{StaticResource CaptionTextBlockStyle}"
                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                     </StackPanel>
-                                    <ToggleSwitch x:Name="LoginNotificationsToggle" Grid.Column="1" IsOn="True" OnContent="" OffContent=""/>
+                                    <ToggleSwitch x:Name="LoginNotificationsToggle" Grid.Column="1" IsOn="True" OnContent="" OffContent="" HorizontalAlignment="Right"/>
                                 </Grid>
 
-                                <!-- Remember Trusted Devices -->
+                                <!-- Trusted Devices -->
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -335,23 +359,14 @@
                                                    Style="{StaticResource CaptionTextBlockStyle}"
                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                     </StackPanel>
-                                    <ToggleSwitch x:Name="TrustedDevicesToggle" Grid.Column="1" IsOn="True" OnContent="" OffContent=""/>
+                                    <ToggleSwitch x:Name="TrustedDevicesToggle" Grid.Column="1" IsOn="True" OnContent="" OffContent="" HorizontalAlignment="Right"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
                     </StackPanel>
-                </PivotItem>
 
-                <!-- Advanced Tab -->
-                <PivotItem>
-                    <PivotItem.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon Glyph="&#xE90F;" FontSize="16"/>
-                            <TextBlock Text="Advanced"/>
-                        </StackPanel>
-                    </PivotItem.Header>
-                    
-                    <StackPanel Spacing="24" Margin="0,24,0,0" MaxWidth="600" HorizontalAlignment="Left">
+                    <!-- Advanced Panel -->
+                    <StackPanel x:Name="AdvancedPanel" Spacing="16" Visibility="Collapsed">
                         <!-- Data Management Card -->
                         <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -379,7 +394,7 @@
                                     <Button x:Name="ClearCacheButton" Grid.Column="1" Click="ClearCacheButton_Click">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <FontIcon Glyph="&#xE74D;" FontSize="14"/>
-                                            <TextBlock Text="Clear"/>
+                                            <TextBlock Text="Clear Cache"/>
                                         </StackPanel>
                                     </Button>
                                 </Grid>
@@ -399,12 +414,12 @@
                                     <Button x:Name="ExportDataButton" Grid.Column="1" Click="ExportDataButton_Click">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <FontIcon Glyph="&#xE896;" FontSize="14"/>
-                                            <TextBlock Text="Export"/>
+                                            <TextBlock Text="Export Data"/>
                                         </StackPanel>
                                     </Button>
                                 </Grid>
 
-                                <!-- Reset to Defaults -->
+                                <!-- Reset Defaults -->
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -433,7 +448,7 @@
                             <StackPanel Spacing="20">
                                 <StackPanel Spacing="4">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <FontIcon Glyph="&#xE7BA;" FontSize="16" Foreground="#EF4444"/>
+                                        <FontIcon Glyph="&#xE7BA;" FontSize="18" Foreground="#EF4444"/>
                                         <TextBlock Text="Danger Zone" Style="{StaticResource SubtitleTextBlockStyle}" Foreground="#EF4444"/>
                                     </StackPanel>
                                     <TextBlock Text="Irreversible actions that affect your account"
@@ -457,15 +472,16 @@
                                             Background="#7f1d1d" Foreground="White">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <FontIcon Glyph="&#xE74D;" FontSize="14"/>
-                                            <TextBlock Text="Delete"/>
+                                            <TextBlock Text="Delete Account"/>
                                         </StackPanel>
                                     </Button>
                                 </Grid>
                             </StackPanel>
                         </Border>
                     </StackPanel>
-                </PivotItem>
-            </Pivot>
+
+                </Grid>
+            </ScrollViewer>
         </Grid>
-    </ScrollViewer>
+    </Grid>
 </Page>

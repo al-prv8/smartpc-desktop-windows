@@ -54,7 +54,11 @@ namespace SensePC.Desktop.WinUI.Views
                         Subject = t.Subject ?? "",
                         Status = t.Status ?? "Open",
                         CreatedAt = t.CreatedAt ?? "",
-                        CreatedAtDisplay = FormatDate(t.CreatedAt)
+                        CreatedAtDisplay = FormatDateShort(t.CreatedAt),
+                        LastUpdated = t.LastUpdated ?? t.CreatedAt ?? "",
+                        LastActivityDisplay = FormatRelativeTime(t.LastUpdated ?? t.CreatedAt),
+                        Email = t.Email ?? "",
+                        Role = t.Role ?? ""
                     }).ToList();
                     
                     ApplyTicketFilters();
@@ -100,7 +104,10 @@ namespace SensePC.Desktop.WinUI.Views
                 var status = statusItem.Content?.ToString();
                 if (!string.IsNullOrEmpty(status) && status != "Any")
                 {
-                    filtered = filtered.Where(t => t.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
+                    // Handle status matching (e.g., "In Progress" matches "in-progress")
+                    var normalizedFilter = status.ToLower().Replace(" ", "-");
+                    filtered = filtered.Where(t => 
+                        t.Status.ToLower().Replace(" ", "-") == normalizedFilter);
                 }
             }
             
@@ -446,6 +453,7 @@ namespace SensePC.Desktop.WinUI.Views
             SubjectError.Visibility = Visibility.Collapsed;
             DescriptionError.Visibility = Visibility.Collapsed;
             
+            // Validate subject
             if (string.IsNullOrEmpty(subject))
             {
                 SubjectError.Text = "Subject is required";
@@ -453,9 +461,40 @@ namespace SensePC.Desktop.WinUI.Views
                 return;
             }
             
+            if (subject.Length > 50)
+            {
+                SubjectError.Text = "Subject cannot exceed 50 characters";
+                SubjectError.Visibility = Visibility.Visible;
+                return;
+            }
+            
+            var subjectValidation = ValidateInput(subject);
+            if (!string.IsNullOrEmpty(subjectValidation))
+            {
+                SubjectError.Text = subjectValidation;
+                SubjectError.Visibility = Visibility.Visible;
+                return;
+            }
+            
+            // Validate description
             if (string.IsNullOrEmpty(description))
             {
                 DescriptionError.Text = "Description is required";
+                DescriptionError.Visibility = Visibility.Visible;
+                return;
+            }
+            
+            if (description.Length > 500)
+            {
+                DescriptionError.Text = "Description cannot exceed 500 characters";
+                DescriptionError.Visibility = Visibility.Visible;
+                return;
+            }
+            
+            var descValidation = ValidateInput(description);
+            if (!string.IsNullOrEmpty(descValidation))
+            {
+                DescriptionError.Text = descValidation;
                 DescriptionError.Visibility = Visibility.Visible;
                 return;
             }
@@ -467,12 +506,57 @@ namespace SensePC.Desktop.WinUI.Views
             {
                 LoadingOverlay.Visibility = Visibility.Visible;
                 
-                var success = await _apiService.CreateTicketAsync(subject, category, priority, description);
+                // Upload attachments if any
+                var uploadedAttachments = new List<TicketAttachment>();
+                foreach (var attachment in _attachments)
+                {
+                    try
+                    {
+                        var file = await Windows.Storage.StorageFile.GetFileFromPathAsync(attachment.Path);
+                        var properties = await file.GetBasicPropertiesAsync();
+                        var fileSize = (long)properties.Size;
+                        var contentType = GetContentType(file.FileType);
+
+                        // Get presigned upload URL (using presign-upload-2 for new tickets)
+                        var uploadResponse = await _apiService.PresignTicketUpload2Async(file.Name, contentType, fileSize);
+                        if (uploadResponse != null)
+                        {
+                            // Read file bytes
+                            var buffer = await Windows.Storage.FileIO.ReadBufferAsync(file);
+                            var bytes = new byte[buffer.Length];
+                            using (var reader = Windows.Storage.Streams.DataReader.FromBuffer(buffer))
+                            {
+                                reader.ReadBytes(bytes);
+                            }
+
+                            // Upload to presigned URL
+                            var uploadSuccess = await _apiService.UploadToTicketPresignedUrlAsync(uploadResponse.UploadUrl, bytes, contentType);
+                            if (uploadSuccess)
+                            {
+                                uploadedAttachments.Add(new TicketAttachment
+                                {
+                                    Name = file.Name,
+                                    Size = $"{(fileSize / 1024.0 / 1024.0):F1} MB",
+                                    Type = contentType,
+                                    FileKey = uploadResponse.FileKey
+                                });
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to upload attachment {attachment.Name}: {ex.Message}");
+                    }
+                }
+                
+                var success = await _apiService.CreateTicketWithAttachmentsAsync(subject, category, priority, description, uploadedAttachments);
                 
                 if (success)
                 {
                     SubjectBox.Text = "";
                     DescriptionBox.Text = "";
+                    _attachments.Clear();
+                    AttachmentsListControl.ItemsSource = null;
                     
                     await ShowDialogAsync("Success", "Ticket submitted successfully! Our support team will respond soon.");
                     
@@ -492,6 +576,40 @@ namespace SensePC.Desktop.WinUI.Views
             {
                 LoadingOverlay.Visibility = Visibility.Collapsed;
             }
+        }
+
+        private string? ValidateInput(string input)
+        {
+            // Normalize common smart punctuation
+            var normalized = input.Normalize(System.Text.NormalizationForm.FormKC)
+                                  .Replace('\u2018', '\'').Replace('\u2019', '\'')  // smart quotes
+                                  .Replace('\u201C', '"').Replace('\u201D', '"')   // smart double quotes
+                                  .Replace('\u00A0', ' ');                          // non-breaking space
+
+            // Check for < > characters
+            if (normalized.Contains('<') || normalized.Contains('>'))
+            {
+                return "Please avoid using < or > characters.";
+            }
+
+            // Check for too many special characters in a row
+            var specialCharPattern = new System.Text.RegularExpressions.Regex(@"[[\\\].,!?'""():;/@#&_-]{4,}");
+            if (specialCharPattern.IsMatch(normalized))
+            {
+                return "Avoid too many special characters in a row.";
+            }
+
+            return null;
+        }
+
+        private string GetContentType(string fileExtension)
+        {
+            return fileExtension.ToLower() switch
+            {
+                ".png" => "image/png",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                _ => "application/octet-stream"
+            };
         }
 
         #endregion
@@ -685,6 +803,35 @@ namespace SensePC.Desktop.WinUI.Views
             return dateStr;
         }
 
+        private string FormatDateShort(string? dateStr)
+        {
+            if (string.IsNullOrEmpty(dateStr)) return "";
+            if (DateTime.TryParse(dateStr, out var date))
+            {
+                return date.ToString("MMM dd");
+            }
+            return dateStr;
+        }
+
+        private string FormatRelativeTime(string? dateStr)
+        {
+            if (string.IsNullOrEmpty(dateStr)) return "";
+            if (DateTime.TryParse(dateStr, out var date))
+            {
+                var now = DateTime.UtcNow;
+                var diff = now - date.ToUniversalTime();
+                
+                if (diff.TotalMinutes < 1) return "Just now";
+                if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
+                if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
+                if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
+                if (diff.TotalDays < 30) return $"{(int)(diff.TotalDays / 7)}w ago";
+                if (diff.TotalDays < 365) return $"{(int)(diff.TotalDays / 30)}mo ago";
+                return $"{(int)(diff.TotalDays / 365)}y ago";
+            }
+            return dateStr;
+        }
+
         private async System.Threading.Tasks.Task ShowDialogAsync(string title, string message)
         {
             var dialog = new ContentDialog
@@ -705,10 +852,60 @@ namespace SensePC.Desktop.WinUI.Views
     public class TicketViewModel
     {
         public string TicketId { get; set; } = "";
+        public string ShortTicketId => TicketId.Length > 8 ? TicketId.Substring(0, 8) + "..." : TicketId;
         public string Subject { get; set; } = "";
         public string Status { get; set; } = "";
+        public string StatusDisplay => CapitalizeFirst(Status.Replace("-", " "));
         public string CreatedAt { get; set; } = "";
         public string CreatedAtDisplay { get; set; } = "";
+        public string LastUpdated { get; set; } = "";
+        public string LastActivityDisplay { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Role { get; set; } = "";
+        
+        public Microsoft.UI.Xaml.Media.SolidColorBrush StatusBackground
+        {
+            get
+            {
+                var lowerStatus = Status?.ToLower() ?? "";
+                return lowerStatus switch
+                {
+                    "closed" => new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                        Microsoft.UI.ColorHelper.FromArgb(30, 150, 150, 150)),
+                    "resolved" => new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                        Microsoft.UI.ColorHelper.FromArgb(30, 59, 130, 246)),
+                    "in-progress" => new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                        Microsoft.UI.ColorHelper.FromArgb(30, 234, 179, 8)),
+                    _ => new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                        Microsoft.UI.ColorHelper.FromArgb(30, 16, 185, 129))
+                };
+            }
+        }
+        
+        public Microsoft.UI.Xaml.Media.SolidColorBrush StatusForeground
+        {
+            get
+            {
+                var lowerStatus = Status?.ToLower() ?? "";
+                return lowerStatus switch
+                {
+                    "closed" => new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                        Microsoft.UI.ColorHelper.FromArgb(255, 150, 150, 150)),
+                    "resolved" => new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                        Microsoft.UI.ColorHelper.FromArgb(255, 59, 130, 246)),
+                    "in-progress" => new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                        Microsoft.UI.ColorHelper.FromArgb(255, 234, 179, 8)),
+                    _ => new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                        Microsoft.UI.ColorHelper.FromArgb(255, 16, 185, 129))
+                };
+            }
+        }
+        
+        private static string CapitalizeFirst(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return "";
+            return char.ToUpper(text[0]) + text.Substring(1);
+        }
     }
 
     public class FAQCategory

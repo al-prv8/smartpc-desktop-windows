@@ -12,6 +12,41 @@ namespace SensePC.Desktop.WinUI.Views
             this.InitializeComponent();
         }
 
+        private void SettingsNavList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // Null check - event can fire before page is fully loaded
+            if (GeneralPanel == null || AppearancePanel == null || SecurityPanel == null || AdvancedPanel == null)
+                return;
+
+            if (SettingsNavList.SelectedItem is ListViewItem selectedItem)
+            {
+                var tag = selectedItem.Tag?.ToString() ?? "General";
+                
+                // Hide all panels
+                GeneralPanel.Visibility = Visibility.Collapsed;
+                AppearancePanel.Visibility = Visibility.Collapsed;
+                SecurityPanel.Visibility = Visibility.Collapsed;
+                AdvancedPanel.Visibility = Visibility.Collapsed;
+                
+                // Show selected panel
+                switch (tag)
+                {
+                    case "General":
+                        GeneralPanel.Visibility = Visibility.Visible;
+                        break;
+                    case "Appearance":
+                        AppearancePanel.Visibility = Visibility.Visible;
+                        break;
+                    case "Security":
+                        SecurityPanel.Visibility = Visibility.Visible;
+                        break;
+                    case "Advanced":
+                        AdvancedPanel.Visibility = Visibility.Visible;
+                        break;
+                }
+            }
+        }
+
         private async void ClearCacheButton_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new ContentDialog

@@ -12,9 +12,7 @@
     <Grid Padding="32,24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Header with Back Button -->
@@ -26,129 +24,229 @@
             </Grid.ColumnDefinitions>
             
             <Button Grid.Column="0" Click="BackButton_Click" ToolTipService.ToolTip="Back to Support">
-                <FontIcon Glyph="&#xE72B;" FontSize="16"/>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xE72B;" FontSize="14"/>
+                    <TextBlock Text="Back to Support"/>
+                </StackPanel>
             </Button>
             
             <StackPanel Grid.Column="1" Margin="16,0,0,0">
                 <TextBlock x:Name="TicketTitle" Text="Ticket #" Style="{StaticResource SubtitleTextBlockStyle}" FontWeight="SemiBold"/>
-                <TextBlock x:Name="TicketSubject" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                <TextBlock x:Name="TicketSubject" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13" TextWrapping="Wrap"/>
             </StackPanel>
             
-            <Button Grid.Column="2" Click="Refresh_Click" ToolTipService.ToolTip="Refresh">
-                <FontIcon Glyph="&#xE72C;" FontSize="14"/>
-            </Button>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                <Border x:Name="StatusBadge" CornerRadius="4" Padding="10,4">
+                    <TextBlock x:Name="StatusText" FontSize="12" FontWeight="SemiBold"/>
+                </Border>
+                <Button Click="Refresh_Click" ToolTipService.ToolTip="Refresh">
+                    <FontIcon Glyph="&#xE72C;" FontSize="14"/>
+                </Button>
+            </StackPanel>
         </Grid>
 
-        <!-- Ticket Info Card -->
-        <Border Grid.Row="1" 
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
-            <StackPanel Spacing="12">
-                <!-- Status Row -->
-                <StackPanel Orientation="Horizontal" Spacing="12">
-                    <Border x:Name="StatusBadge" CornerRadius="4" Padding="8,4">
-                        <TextBlock x:Name="StatusText" FontSize="12" FontWeight="SemiBold"/>
-                    </Border>
-                    <TextBlock x:Name="CategoryText" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="PriorityText" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="CreatedText" FontSize="13" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center"/>
-                </StackPanel>
-                
-                <!-- Description -->
-                <Border x:Name="DescriptionSection" Visibility="Collapsed">
+        <!-- Main Content Grid (Conversation + Info Panel) -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="360"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: Conversation Area -->
+            <Grid Grid.Column="0" Margin="0,0,16,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Description Card -->
+                <Border Grid.Row="0" x:Name="DescriptionSection" Visibility="Collapsed"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
                     <StackPanel Spacing="8">
-                        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}"/>
-                        <TextBlock Text="Description" FontWeight="SemiBold" FontSize="13"/>
+                        <TextBlock Text="Description" FontWeight="SemiBold" FontSize="14"/>
                         <TextBlock x:Name="DescriptionText" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        
+                        <!-- Ticket Attachments -->
+                        <StackPanel x:Name="TicketAttachmentsPanel" Visibility="Collapsed" Margin="0,8,0,0">
+                            <TextBlock Text="Attached Files:" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,8"/>
+                            <ItemsControl x:Name="TicketAttachmentsList">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="8"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
-            </StackPanel>
-        </Border>
 
-        <!-- Messages List -->
-        <ScrollViewer Grid.Row="2" x:Name="MessagesScrollViewer">
-            <StackPanel x:Name="MessagesContainer" Spacing="12" Padding="0,0,0,16"/>
-        </ScrollViewer>
+                <!-- Messages List -->
+                <ScrollViewer Grid.Row="1" x:Name="MessagesScrollViewer">
+                    <StackPanel x:Name="MessagesContainer" Spacing="12" Padding="0,0,0,16"/>
+                </ScrollViewer>
 
-        <!-- Reply Section -->
-        <Border Grid.Row="3" x:Name="ReplySection"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,16,0,0">
-            <StackPanel Spacing="12">
-                <TextBlock Text="Reply to Support" FontWeight="SemiBold"/>
+                <!-- Reopen Warning (for resolved tickets) -->
+                <Border Grid.Row="2" x:Name="ReopenWarning" Visibility="Collapsed"
+                        Background="#FFF3CD" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE7BA;" FontSize="16" Foreground="#856404"/>
+                        <TextBlock Text="This ticket has been marked as resolved. Your reply will reopen it."
+                                   Foreground="#856404" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Reply Section -->
+                <Border Grid.Row="2" x:Name="ReplySection"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,8,0,0">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Reply to Support" FontWeight="SemiBold"/>
+                        
+                        <TextBox x:Name="ReplyTextBox" 
+                                 PlaceholderText="Type your reply here..."
+                                 TextWrapping="Wrap" AcceptsReturn="True"
+                                 MinHeight="80"/>
+                        
+                        <!-- Actions Row -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                <Button Click="AttachButton_Click">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon Glyph="&#xE723;" FontSize="14"/>
+                                        <TextBlock Text="Attach"/>
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock x:Name="AttachmentCountText" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12"/>
+                            </StackPanel>
+                            
+                            <Button Grid.Column="1" x:Name="SendReplyButton" 
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    Click="SendReply_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE724;" FontSize="14"/>
+                                    <TextBlock Text="Send"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                        
+                        <!-- Attached files -->
+                        <ItemsControl x:Name="AttachmentsListControl">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="8"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                                            CornerRadius="4" Padding="8,4">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <FontIcon Glyph="&#xE7C3;" FontSize="12"/>
+                                            <TextBlock Text="{Binding Name}" FontSize="12"/>
+                                            <Button Background="Transparent" Padding="2" Click="RemoveAttachment_Click" Tag="{Binding}">
+                                                <FontIcon Glyph="&#xE711;" FontSize="10" Foreground="{ThemeResource SystemFillColorCriticalBrush}"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
                 
-                <TextBox x:Name="ReplyTextBox" 
-                         PlaceholderText="Type your reply here..."
-                         TextWrapping="Wrap" AcceptsReturn="True"
-                         MinHeight="80"/>
-                
-                <!-- Actions Row -->
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                        <Button Click="AttachButton_Click">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon Glyph="&#xE723;" FontSize="14"/>
-                                <TextBlock Text="Attach"/>
+                <!-- Closed Ticket Notice -->
+                <Border Grid.Row="2" x:Name="ClosedNotice" Visibility="Collapsed"
+                        Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                        CornerRadius="8" Padding="16" Margin="0,8,0,0">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <FontIcon Glyph="&#xE8FB;" FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        <TextBlock Text="This ticket is closed. If you need further assistance, please open a new ticket."
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Right: Ticket Info Panel -->
+            <Border Grid.Column="1"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="20">
+                <ScrollViewer>
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Ticket Info" FontWeight="SemiBold" FontSize="18"/>
+                        
+                        <!-- Info Grid -->
+                        <Grid RowSpacing="12" ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Email" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="EmailText" TextTrimming="CharacterEllipsis"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Role" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="RoleText"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Ticket ID" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TicketIdText" TextWrapping="Wrap"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Created" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="CreatedText"/>
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Category" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock Grid.Row="4" Grid.Column="1" x:Name="CategoryText"/>
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Status" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <Border Grid.Row="5" Grid.Column="1" x:Name="InfoStatusBadge" CornerRadius="4" Padding="8,4" HorizontalAlignment="Left">
+                                <TextBlock x:Name="InfoStatusText" FontSize="12" FontWeight="SemiBold"/>
+                            </Border>
+
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Priority" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <ComboBox Grid.Row="6" Grid.Column="1" x:Name="PriorityCombo" 
+                                      SelectionChanged="PriorityCombo_SelectionChanged" MinWidth="120">
+                                <ComboBoxItem Content="Low" Tag="low"/>
+                                <ComboBoxItem Content="Medium" Tag="medium"/>
+                                <ComboBoxItem Content="High" Tag="high"/>
+                            </ComboBox>
+                        </Grid>
+
+                        <!-- Mark as Resolved Button -->
+                        <Button x:Name="MarkResolvedButton" 
+                                HorizontalAlignment="Stretch"
+                                Click="MarkResolved_Click"
+                                Margin="0,8,0,0">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE73E;" FontSize="14"/>
+                                <TextBlock Text="Mark as Resolved"/>
                             </StackPanel>
                         </Button>
-                        <TextBlock x:Name="AttachmentCountText" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12"/>
                     </StackPanel>
-                    
-                    <Button Grid.Column="1" x:Name="SendReplyButton" 
-                            Style="{StaticResource AccentButtonStyle}"
-                            Click="SendReply_Click">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <FontIcon Glyph="&#xE724;" FontSize="14"/>
-                            <TextBlock Text="Send"/>
-                        </StackPanel>
-                    </Button>
-                </Grid>
-                
-                <!-- Attached files -->
-                <ItemsControl x:Name="AttachmentsListControl">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" Spacing="8"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Background="{ThemeResource ControlFillColorSecondaryBrush}"
-                                    CornerRadius="4" Padding="8,4">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon Glyph="&#xE7C3;" FontSize="12"/>
-                                    <TextBlock Text="{Binding Name}" FontSize="12"/>
-                                    <Button Background="Transparent" Padding="2" Click="RemoveAttachment_Click" Tag="{Binding}">
-                                        <FontIcon Glyph="&#xE711;" FontSize="10" Foreground="{ThemeResource SystemFillColorCriticalBrush}"/>
-                                    </Button>
-                                </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
-        </Border>
+                </ScrollViewer>
+            </Border>
+        </Grid>
         
-        <!-- Closed Ticket Notice -->
-        <Border Grid.Row="3" x:Name="ClosedNotice" Visibility="Collapsed"
-                Background="{ThemeResource ControlFillColorSecondaryBrush}"
-                CornerRadius="8" Padding="16" Margin="0,16,0,0">
-            <StackPanel Orientation="Horizontal" Spacing="12">
-                <FontIcon Glyph="&#xE8FB;" FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                <TextBlock Text="This ticket is closed. If you need further assistance, please open a new ticket."
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
-            </StackPanel>
-        </Border>
-        
-        <!-- Loading overlay (no blur) -->
-        <Grid x:Name="LoadingOverlay" Visibility="Collapsed" Grid.RowSpan="4">
+        <!-- Loading overlay -->
+        <Grid x:Name="LoadingOverlay" Visibility="Collapsed" Grid.RowSpan="2" 
+              Background="{ThemeResource LayerFillColorDefaultBrush}">
             <ProgressRing IsActive="True" Width="40" Height="40"/>
         </Grid>
     </Grid>

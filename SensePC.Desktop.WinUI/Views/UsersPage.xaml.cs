@@ -176,24 +176,55 @@ namespace SensePC.Desktop.WinUI.Views
 
             if (_assignments.TryGetValue(userId, out var pcs) && pcs.Count > 0)
             {
-                var countText = pcs.Count == 1 ? "1 PC" : $"{pcs.Count} PCs";
-                panel.Children.Add(new TextBlock
+                // Show up to 2 PC name badges, then "+X more" if needed
+                var maxVisible = 2;
+                var visiblePCs = pcs.Take(maxVisible).ToList();
+                
+                foreach (var pc in visiblePCs)
                 {
-                    Text = countText,
-                    Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"]
-                });
+                    var pcName = !string.IsNullOrEmpty(pc.SystemName) ? pc.SystemName : pc.InstanceId?.Substring(0, Math.Min(8, pc.InstanceId.Length)) ?? "PC";
+                    panel.Children.Add(CreatePCBadge(pcName));
+                }
+                
+                if (pcs.Count > maxVisible)
+                {
+                    panel.Children.Add(new TextBlock
+                    {
+                        Text = $"+{pcs.Count - maxVisible} more",
+                        Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
+                        Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Margin = new Thickness(4, 0, 0, 0)
+                    });
+                }
             }
             else
             {
                 panel.Children.Add(new TextBlock
                 {
-                    Text = "None",
+                    Text = "—",
                     Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
                     Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"]
                 });
             }
 
             return panel;
+        }
+
+        private Border CreatePCBadge(string pcName)
+        {
+            return new Border
+            {
+                Background = new SolidColorBrush(Windows.UI.Color.FromArgb(20, 99, 102, 241)),
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(6, 2, 6, 2),
+                Child = new TextBlock
+                {
+                    Text = pcName,
+                    FontSize = 11,
+                    Foreground = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 99, 102, 241))
+                }
+            };
         }
 
         private Button CreateActionsButton(ApiUser user)
@@ -218,6 +249,15 @@ namespace SensePC.Desktop.WinUI.Views
                 ((MenuFlyoutItem)flyout.Items.Last()).Click += async (s, e) => await ShowManagePCDialogAsync(user);
             }
 
+            // Change Role option
+            var changeRoleItem = new MenuFlyoutItem
+            {
+                Text = "Change Role",
+                Icon = new FontIcon { Glyph = "\uE748" }
+            };
+            changeRoleItem.Click += async (s, e) => await ShowChangeRoleDialogAsync(user);
+            flyout.Items.Add(changeRoleItem);
+
             if (user.Status?.ToLower() == "pending")
             {
                 flyout.Items.Add(new MenuFlyoutItem
@@ -228,8 +268,7 @@ namespace SensePC.Desktop.WinUI.Views
                 ((MenuFlyoutItem)flyout.Items.Last()).Click += async (s, e) => await ResendInviteAsync(user);
             }
 
-            if (flyout.Items.Count > 0)
-                flyout.Items.Add(new MenuFlyoutSeparator());
+            flyout.Items.Add(new MenuFlyoutSeparator());
 
             var deleteItem = new MenuFlyoutItem
             {
@@ -241,6 +280,64 @@ namespace SensePC.Desktop.WinUI.Views
 
             button.Flyout = flyout;
             return button;
+        }
+
+        private async Task ShowChangeRoleDialogAsync(ApiUser user)
+        {
+            var currentRole = user.Role?.ToLower() ?? "member";
+            var newRole = currentRole == "admin" ? "member" : "admin";
+            var newRoleDisplay = newRole == "admin" ? "Admin" : "Member";
+
+            var content = new StackPanel { Spacing = 12 };
+            content.Children.Add(new TextBlock 
+            { 
+                Text = $"Change {user.DisplayName}'s role from {user.Role} to {newRoleDisplay}?",
+                TextWrapping = TextWrapping.Wrap 
+            });
+
+            if (newRole == "admin")
+            {
+                content.Children.Add(new InfoBar
+                {
+                    IsOpen = true,
+                    IsClosable = false,
+                    Severity = InfoBarSeverity.Warning,
+                    Message = "Admins have full access to manage all PCs and users."
+                });
+            }
+
+            var dialog = new ContentDialog
+            {
+                Title = "Change Role",
+                Content = content,
+                PrimaryButtonText = $"Change to {newRoleDisplay}",
+                CloseButtonText = "Cancel",
+                XamlRoot = this.XamlRoot
+            };
+
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            {
+                try
+                {
+                    // Show loading state
+                    dialog.IsPrimaryButtonEnabled = false;
+                    
+                    var success = await _apiService.ChangeUserRoleAsync(user.Id, user.Email, newRole);
+                    if (success)
+                    {
+                        await ShowSuccessDialogAsync("Role Changed", $"{user.DisplayName} is now a {newRoleDisplay}.");
+                        await LoadDataAsync();
+                    }
+                    else
+                    {
+                        await ShowErrorDialogAsync("Failed to change role. Please try again.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await ShowErrorDialogAsync($"Error: {ex.Message}");
+                }
+            }
         }
 
         private async Task ShowManagePCDialogAsync(ApiUser user)
@@ -336,6 +433,14 @@ namespace SensePC.Desktop.WinUI.Views
             var nameBox = new TextBox { PlaceholderText = "Full name" };
             var emailBox = new TextBox { PlaceholderText = "Email address" };
             var roleBox = new ComboBox { ItemsSource = new[] { "Admin", "Member" }, SelectedIndex = 1, HorizontalAlignment = HorizontalAlignment.Stretch };
+            var errorText = new TextBlock 
+            { 
+                Foreground = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 239, 68, 68)),
+                FontSize = 12,
+                Visibility = Visibility.Collapsed,
+                TextWrapping = TextWrapping.Wrap
+            };
+            var loadingRing = new ProgressRing { IsActive = false, Width = 16, Height = 16 };
 
             var content = new StackPanel { Spacing = 12, MinWidth = 300 };
             content.Children.Add(new TextBlock { Text = "Name" });
@@ -344,6 +449,7 @@ namespace SensePC.Desktop.WinUI.Views
             content.Children.Add(emailBox);
             content.Children.Add(new TextBlock { Text = "Role" });
             content.Children.Add(roleBox);
+            content.Children.Add(errorText);
 
             var dialog = new ContentDialog
             {
@@ -354,12 +460,116 @@ namespace SensePC.Desktop.WinUI.Views
                 XamlRoot = this.XamlRoot
             };
 
-            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            dialog.PrimaryButtonClick += async (sender, args) =>
             {
-                var role = roleBox.SelectedItem?.ToString()?.ToLower() ?? "member";
-                await _apiService.InviteUserAsync(nameBox.Text, emailBox.Text, role);
-                await LoadDataAsync();
+                args.Cancel = true; // Prevent auto-close until we validate
+                
+                // Validate name
+                if (string.IsNullOrWhiteSpace(nameBox.Text))
+                {
+                    errorText.Text = "Name is required.";
+                    errorText.Visibility = Visibility.Visible;
+                    return;
+                }
+
+                // Validate email
+                if (string.IsNullOrWhiteSpace(emailBox.Text))
+                {
+                    errorText.Text = "Email is required.";
+                    errorText.Visibility = Visibility.Visible;
+                    return;
+                }
+
+                if (!IsValidEmail(emailBox.Text))
+                {
+                    errorText.Text = "Please enter a valid email address.";
+                    errorText.Visibility = Visibility.Visible;
+                    return;
+                }
+
+                if (roleBox.SelectedItem == null)
+                {
+                    errorText.Text = "Please select a role.";
+                    errorText.Visibility = Visibility.Visible;
+                    return;
+                }
+
+                errorText.Visibility = Visibility.Collapsed;
+
+                // Show loading state
+                dialog.IsPrimaryButtonEnabled = false;
+                dialog.IsSecondaryButtonEnabled = false;
+                dialog.PrimaryButtonText = "Sending...";
+
+                try
+                {
+                    var role = roleBox.SelectedItem?.ToString()?.ToLower() ?? "member";
+                    var success = await _apiService.InviteUserAsync(nameBox.Text, emailBox.Text, role);
+                    
+                    if (success)
+                    {
+                        dialog.Hide();
+                        await ShowSuccessDialogAsync("Invitation Sent", $"An invitation has been sent to {emailBox.Text}.");
+                        await LoadDataAsync();
+                    }
+                    else
+                    {
+                        errorText.Text = "Failed to send invitation. Please try again.";
+                        errorText.Visibility = Visibility.Visible;
+                        dialog.IsPrimaryButtonEnabled = true;
+                        dialog.IsSecondaryButtonEnabled = true;
+                        dialog.PrimaryButtonText = "Send Invite";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorText.Text = $"Error: {ex.Message}";
+                    errorText.Visibility = Visibility.Visible;
+                    dialog.IsPrimaryButtonEnabled = true;
+                    dialog.IsSecondaryButtonEnabled = true;
+                    dialog.PrimaryButtonText = "Send Invite";
+                }
+            };
+
+            await dialog.ShowAsync();
+        }
+
+        private bool IsValidEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return false;
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
             }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private async Task ShowSuccessDialogAsync(string title, string message)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = title,
+                Content = message,
+                CloseButtonText = "OK",
+                XamlRoot = this.XamlRoot
+            };
+            await dialog.ShowAsync();
+        }
+
+        private async Task ShowErrorDialogAsync(string message)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = "Error",
+                Content = message,
+                CloseButtonText = "OK",
+                XamlRoot = this.XamlRoot
+            };
+            await dialog.ShowAsync();
         }
     }
 }

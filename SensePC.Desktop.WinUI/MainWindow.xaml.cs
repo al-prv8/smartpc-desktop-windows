@@ -110,9 +110,10 @@ namespace SensePC.Desktop.WinUI
                 NavView.SelectedItem = NavSensePC;
                 DashboardFrame.Navigate(typeof(Views.SensePCPage));
                 
-                // Fetch balance and user profile
+                // Fetch balance, user profile, and notifications count
                 _ = FetchBalanceAsync();
                 _ = FetchUserProfileAsync();
+                _ = FetchNotificationCountAsync();
             }
             catch (Exception ex)
             {
@@ -199,6 +200,48 @@ namespace SensePC.Desktop.WinUI
             }
         }
 
+        private async Task FetchNotificationCountAsync()
+        {
+            try
+            {
+                var idToken = await _secureStorage.GetAsync("id_token");
+                if (string.IsNullOrEmpty(idToken)) return;
+
+                using var httpClient = new System.Net.Http.HttpClient();
+                var request = new System.Net.Http.HttpRequestMessage(
+                    System.Net.Http.HttpMethod.Get, 
+                    "https://yns7wkdio7.execute-api.us-east-1.amazonaws.com/dev/");
+                request.Headers.Add("Authorization", idToken);
+
+                var response = await httpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var result = System.Text.Json.JsonSerializer.Deserialize<NotificationsCountResponse>(content, 
+                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                    var unreadCount = result?.Notifications?.Count(n => !n.IsRead) ?? 0;
+
+                    DispatcherQueue.TryEnqueue(() =>
+                    {
+                        if (unreadCount > 0)
+                        {
+                            NotificationBadge.Value = unreadCount;
+                            NotificationBadge.Visibility = Visibility.Visible;
+                        }
+                        else
+                        {
+                            NotificationBadge.Visibility = Visibility.Collapsed;
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error fetching notification count");
+            }
+        }
+
         #endregion
 
         #region Navigation
@@ -246,12 +289,18 @@ namespace SensePC.Desktop.WinUI
                         break;
                     case "Settings":
                         DashboardFrame.Navigate(typeof(Views.SettingsPage));
+                        _ = FetchNotificationCountAsync(); // Refresh count when leaving notifications
                         break;
                     case "Profile":
                         DashboardFrame.Navigate(typeof(Views.ProfilePage));
+                        _ = FetchNotificationCountAsync(); // Refresh count when leaving notifications
                         break;
                     case "Logout":
                         HandleLogout();
+                        break;
+                    default:
+                        // Refresh notification count when navigating to any page other than Notifications
+                        _ = FetchNotificationCountAsync();
                         break;
                 }
             }
@@ -555,5 +604,18 @@ namespace SensePC.Desktop.WinUI
         public string DnsName { get; set; } = "";
         public string SessionToken { get; set; } = "";
         public string SessionId { get; set; } = "";
+    }
+
+    /// <summary>
+    /// Response model for notification count
+    /// </summary>
+    public class NotificationsCountResponse
+    {
+        public List<NotificationCountItem>? Notifications { get; set; }
+    }
+
+    public class NotificationCountItem
+    {
+        public bool IsRead { get; set; }
     }
 }
