@@ -8,7 +8,6 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-                <!-- <ResourceDictionary Source="Styles/AppStyles.xaml"/> -->
             </ResourceDictionary.MergedDictionaries>
             
             <!-- Converters -->
@@ -17,26 +16,6 @@
             <converters:MfaTypeToMessageConverter x:Key="MfaTypeToMessageConverter"/>
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
             
-            <!-- SensePC Brand Colors (Extracted from Tailwind) -->
-            <!-- Primary Link Blue: #2530F0 -->
-            <Color x:Key="SensePrimaryColor">#2530F0</Color>
-            <SolidColorBrush x:Key="SensePrimaryBrush" Color="{StaticResource SensePrimaryColor}" />
-            
-            <!-- Surface Dark: Slate 900ish -->
-            <Color x:Key="SenseBackgroundColor">#0F172A</Color>
-            <SolidColorBrush x:Key="SenseBackgroundBrush" Color="{StaticResource SenseBackgroundColor}" />
-            
-            <Color x:Key="SenseSurfaceColor">#1E293B</Color>
-            <SolidColorBrush x:Key="SenseSurfaceBrush" Color="{StaticResource SenseSurfaceColor}" />
-            
-            <!-- Focus Blue/Purple -->
-            <Color x:Key="SenseFocusColor">#5F4BF6</Color>
-            <SolidColorBrush x:Key="SenseFocusBrush" Color="{StaticResource SenseFocusColor}" />
-            
-            <!-- Overrides for Standard Controls -->
-            <StaticResource x:Key="SystemControlHighlightListAccentLowBrush" ResourceKey="SensePrimaryBrush" />
-            <StaticResource x:Key="SystemControlHighlightListAccentMediumBrush" ResourceKey="SensePrimaryBrush" />
-            <StaticResource x:Key="SystemControlHighlightListAccentHighBrush" ResourceKey="SensePrimaryBrush" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

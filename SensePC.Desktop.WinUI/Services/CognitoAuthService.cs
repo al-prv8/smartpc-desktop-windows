@@ -13,9 +13,9 @@ namespace SensePC.Desktop.WinUI.Services;
 /// </summary>
 public class CognitoAuthService : ICognitoAuthService
 {
-    // From env.example analysis
-    private const string UserPoolId = "us-east-1_vgBCKmL0c";
-    private const string ClientId = "2lknj90rkjmtkcnph06q6r93ug";
+    // Use centralized ApiConfig for environment management
+    private static readonly string UserPoolId = ApiConfig.UserPoolId;
+    private static readonly string ClientId = ApiConfig.UserPoolClientId;
     private static readonly RegionEndpoint Region = RegionEndpoint.USEast1;
 
     private readonly AmazonCognitoIdentityProviderClient _cognitoClient;

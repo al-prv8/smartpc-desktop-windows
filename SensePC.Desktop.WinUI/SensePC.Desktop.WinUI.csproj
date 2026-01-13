@@ -54,6 +54,13 @@
     <Page Include="Views\DCVSessionsPage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
     <Page Include="Views\SettingsPage.xaml" SubType="Designer" Generator="MSBuild:Compile" />
     <Page Include="Controls\PCInstanceCard.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+    <Page Include="Styles\SensePCTheme.xaml" SubType="Designer" Generator="MSBuild:Compile" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   

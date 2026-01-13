@@ -210,7 +210,7 @@ namespace SensePC.Desktop.WinUI
                 using var httpClient = new System.Net.Http.HttpClient();
                 var request = new System.Net.Http.HttpRequestMessage(
                     System.Net.Http.HttpMethod.Get, 
-                    "https://yns7wkdio7.execute-api.us-east-1.amazonaws.com/dev/");
+                    Services.ApiConfig.NotificationUrl);
                 request.Headers.Add("Authorization", idToken);
 
                 var response = await httpClient.SendAsync(request);
@@ -249,6 +249,11 @@ namespace SensePC.Desktop.WinUI
         private void NavView_Loaded(object sender, RoutedEventArgs e)
         {
             NavView.SelectedItem = NavSensePC;
+        }
+
+        private void CustomPaneToggle_Click(object sender, RoutedEventArgs e)
+        {
+            NavView.IsPaneOpen = !NavView.IsPaneOpen;
         }
 
         private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
@@ -433,7 +438,7 @@ namespace SensePC.Desktop.WinUI
                     _webViewInitialized = true;
                 }
 
-                var dcvGatewayUrl = "https://smartpc.cloud";
+                var dcvGatewayUrl = Services.ApiConfig.WebsiteBaseUrl;
                 
                 System.Diagnostics.Debug.WriteLine($"Navigating to {dcvGatewayUrl}");
 

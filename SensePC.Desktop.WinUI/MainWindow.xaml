@@ -24,15 +24,15 @@
                         SelectionChanged="NavView_SelectionChanged"
                         Loaded="NavView_Loaded">
             
-            <!-- Navigation Header -->
-            <NavigationView.PaneHeader>
-                <StackPanel Margin="0,8,0,0">
-                    <StackPanel Orientation="Horizontal" Margin="12,8,12,12">
-                        <TextBlock Text="Sense" FontSize="22" FontWeight="Bold"/>
-                        <TextBlock Text="PC" FontSize="22" FontWeight="Bold" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
-                    </StackPanel>
-                </StackPanel>
-            </NavigationView.PaneHeader>
+            <!-- Navigation Header with Logo (below toggle button) -->
+            <NavigationView.PaneCustomContent>
+                <Grid HorizontalAlignment="Stretch" Margin="0,8,0,16">
+                    <Image Source="ms-appx:///Assets/sensepc-logo-dark.png" 
+                           Height="70" Width="70" 
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+                </Grid>
+            </NavigationView.PaneCustomContent>
 
             <!-- Navigation Items -->
             <NavigationView.MenuItems>

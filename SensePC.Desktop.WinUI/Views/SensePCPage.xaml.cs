@@ -566,7 +566,7 @@ namespace SensePC.Desktop.WinUI.Views
 
         private void OpenWebDashboard_Click(object sender, RoutedEventArgs e)
         {
-            var uri = new Uri("https://smartpc.cloud/dashboard/sense-pc");
+            var uri = new Uri(Services.ApiConfig.DashboardUrl);
             _ = Windows.System.Launcher.LaunchUriAsync(uri);
         }
 

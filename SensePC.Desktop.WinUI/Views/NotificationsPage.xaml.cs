@@ -21,8 +21,8 @@ namespace SensePC.Desktop.WinUI.Views
         private readonly HttpClient _httpClient;
         private List<NotificationItem> _notifications = new();
         
-        // Notification API URL from env.example
-        private const string NOTIFICATION_API = "https://yns7wkdio7.execute-api.us-east-1.amazonaws.com/dev/";
+        // Use centralized API configuration
+        private static readonly string NOTIFICATION_API = Services.ApiConfig.NotificationUrl;
 
         public NotificationsPage()
         {

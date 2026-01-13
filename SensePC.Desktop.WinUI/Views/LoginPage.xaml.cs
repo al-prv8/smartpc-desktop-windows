@@ -53,7 +53,7 @@ namespace SensePC.Desktop.WinUI.Views
             // Open sign up page in browser
             var startInfo = new ProcessStartInfo
             {
-                FileName = "https://smartpc.cloud/auth/sign-up",
+                FileName = Services.ApiConfig.AuthSignUpUrl,
                 UseShellExecute = true
             };
             Process.Start(startInfo);
@@ -64,7 +64,7 @@ namespace SensePC.Desktop.WinUI.Views
             // Open forgot password page in browser
             var startInfo = new ProcessStartInfo
             {
-                FileName = "https://smartpc.cloud/auth",
+                FileName = Services.ApiConfig.AuthUrl,
                 UseShellExecute = true
             };
             Process.Start(startInfo);

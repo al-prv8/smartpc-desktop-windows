@@ -18,12 +18,12 @@ namespace SensePC.Desktop.WinUI.Services
     {
         private readonly ISecureStorage _secureStorage;
         
-        // OAuth Configuration - from env.example and amplify-config.ts
-        private const string OAuthDomain = "auth.smartpc.cloud";
-        private const string CognitoClientId = "2lknj90rkjmtkcnph06q6r93ug";
-        // Must match what's registered in Cognito - the website uses AUTH_REDIRECT_URL/auth/callback
-        private const string RedirectUri = "https://smartpc.cloud/auth/callback";
-        private const string TokenEndpoint = "https://auth.smartpc.cloud/oauth2/token";
+        // Use centralized API configuration
+        private static readonly string OAuthDomain = ApiConfig.OAuthDomain;
+        private static readonly string CognitoClientId = ApiConfig.UserPoolClientId;
+        private static readonly string RedirectUri = ApiConfig.RedirectUri;
+        private static readonly string TokenEndpoint = ApiConfig.OAuthTokenEndpoint;
+        private static readonly string WebsiteDomain = ApiConfig.WebsiteDomain;
 
         public OAuthWebViewService(ISecureStorage secureStorage)
         {
@@ -66,7 +66,7 @@ namespace SensePC.Desktop.WinUI.Services
                 var uri = new Uri(args.Uri);
                 
                 // Check if this is the callback URL (matches the redirect URI)
-                if (uri.Host == "smartpc.cloud" && uri.AbsolutePath.Contains("/auth/callback"))
+                if (uri.Host == WebsiteDomain && uri.AbsolutePath.Contains("/auth/callback"))
                 {
                     var query = HttpUtility.ParseQueryString(uri.Query);
                     var code = query["code"];

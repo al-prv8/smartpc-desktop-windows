@@ -136,8 +136,9 @@ namespace SensePC.Desktop.WinUI.Services
             }
         }
 
-        private const string BILLING_API_URL = "https://558xjerom8.execute-api.us-east-1.amazonaws.com/prod/billing/";
-        private const string USER_MANAGEMENT_API_URL = "https://v0605yjfrf.execute-api.us-east-1.amazonaws.com/prod/";
+        // Use centralized API configuration
+        private static readonly string BILLING_API_URL = ApiConfig.BillingUrl;
+        private static readonly string USER_MANAGEMENT_API_URL = ApiConfig.UsersUrl.Replace("/users", "/");
 
         /// <summary>
         /// Get current user balance from billing API
@@ -1118,6 +1119,53 @@ namespace SensePC.Desktop.WinUI.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"GetSmartPCConfig error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Get cost estimate for a PC configuration from the backend API
+        /// </summary>
+        public async Task<CostEstimateResponse?> GetCostEstimateAsync(string configId, int storageSize, string region)
+        {
+            try
+            {
+                var idToken = await GetIdTokenAsync();
+                
+                var payload = new
+                {
+                    configId,
+                    storageSize,
+                    region
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Post, ApiConfig.EstimationUrl);
+                if (!string.IsNullOrEmpty(idToken))
+                {
+                    request.Headers.Add("Authorization", idToken);
+                }
+                request.Content = content;
+
+                var response = await _httpClient.SendAsync(request);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                System.Diagnostics.Debug.WriteLine($"Cost Estimate response: {responseContent}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return JsonSerializer.Deserialize<CostEstimateResponse>(responseContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"GetCostEstimate error: {ex.Message}");
                 return null;
             }
         }
@@ -4022,6 +4070,36 @@ namespace SensePC.Desktop.WinUI.Services
 
         [System.Text.Json.Serialization.JsonPropertyName("locationOptions")]
         public List<SmartPCConfigOption>? LocationOptions { get; set; }
+    }
+
+    /// <summary>
+    /// Cost estimate response from the backend API
+    /// </summary>
+    public class CostEstimateResponse
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("instance")]
+        public CostEstimateItem? Instance { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("storage")]
+        public CostEstimateItem? Storage { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("total")]
+        public CostEstimateItem? Total { get; set; }
+    }
+
+    /// <summary>
+    /// Individual cost estimate item with hourly, daily, and monthly prices
+    /// </summary>
+    public class CostEstimateItem
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("pricePerHour")]
+        public double? PricePerHour { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("pricePerDay")]
+        public double? PricePerDay { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("pricePerMonth")]
+        public double? PricePerMonth { get; set; }
     }
 
     /// <summary>

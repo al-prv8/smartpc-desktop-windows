@@ -143,8 +143,9 @@ namespace SensePC.Desktop.WinUI.Views
                 // Set cookies for authentication
                 var cookieManager = webView.CoreWebView2.CookieManager;
                 
-                // Cognito Client ID - same as used in the app
-                const string cognitoClientId = "2lknj90rkjmtkcnph06q6r93ug";
+                // Cognito Client ID from centralized config
+                var cognitoClientId = Services.ApiConfig.UserPoolClientId;
+                var websiteDomain = Services.ApiConfig.WebsiteDomain;
                 
                 // Set the auth.state cookie that the website uses
                 if (!string.IsNullOrEmpty(idToken))
@@ -156,7 +157,7 @@ namespace SensePC.Desktop.WinUI.Views
                         token = idToken 
                     });
                     
-                    var authStateCookie = cookieManager.CreateCookie("auth.state", authStateValue, "smartpc.cloud", "/");
+                    var authStateCookie = cookieManager.CreateCookie("auth.state", authStateValue, websiteDomain, "/");
                     authStateCookie.IsSecure = true;
                     authStateCookie.IsHttpOnly = false;
                     cookieManager.AddOrUpdateCookie(authStateCookie);
@@ -173,7 +174,7 @@ namespace SensePC.Desktop.WinUI.Views
                     var cognitoAccessCookie = cookieManager.CreateCookie(
                         $"CognitoIdentityServiceProvider.{cognitoClientId}.{userKey}.accessToken", 
                         accessToken, 
-                        "smartpc.cloud", 
+                        websiteDomain, 
                         "/");
                     cognitoAccessCookie.IsSecure = true;
                     cognitoAccessCookie.IsHttpOnly = false;
@@ -187,7 +188,7 @@ namespace SensePC.Desktop.WinUI.Views
                     var cognitoIdCookie = cookieManager.CreateCookie(
                         $"CognitoIdentityServiceProvider.{cognitoClientId}.{userKey}.idToken", 
                         idToken, 
-                        "smartpc.cloud", 
+                        websiteDomain, 
                         "/");
                     cognitoIdCookie.IsSecure = true;
                     cognitoIdCookie.IsHttpOnly = false;
@@ -201,7 +202,7 @@ namespace SensePC.Desktop.WinUI.Views
                     var cognitoRefreshCookie = cookieManager.CreateCookie(
                         $"CognitoIdentityServiceProvider.{cognitoClientId}.{userKey}.refreshToken", 
                         refreshToken, 
-                        "smartpc.cloud", 
+                        websiteDomain, 
                         "/");
                     cognitoRefreshCookie.IsSecure = true;
                     cognitoRefreshCookie.IsHttpOnly = false;
@@ -214,7 +215,7 @@ namespace SensePC.Desktop.WinUI.Views
                     var lastAuthUserCookie = cookieManager.CreateCookie(
                         $"CognitoIdentityServiceProvider.{cognitoClientId}.LastAuthUser", 
                         userKey, 
-                        "smartpc.cloud", 
+                        websiteDomain, 
                         "/");
                     lastAuthUserCookie.IsSecure = true;
                     lastAuthUserCookie.IsHttpOnly = false;
@@ -222,10 +223,10 @@ namespace SensePC.Desktop.WinUI.Views
                 }
 
 
-                // Strategy: Navigate to the main smartpc.cloud website first to get proper origin
+                // Strategy: Navigate to the main website first to get proper origin
                 // and access to the DCV SDK at /dcvjs/dcv.js, then inject the connection code
-                // Note: session.DnsName (e.g. mypc.smartpc.cloud) is just the PC's DNS, not a web server
-                var dcvGatewayUrl = "https://smartpc.cloud";
+                // Note: session.DnsName (e.g. mypc.sensepc.com) is just the PC's DNS, not a web server
+                var dcvGatewayUrl = Services.ApiConfig.WebsiteBaseUrl;
                 
                 System.Diagnostics.Debug.WriteLine($"Loading DCV viewer for {session.SystemName}");
                 System.Diagnostics.Debug.WriteLine($"SDK URL: {dcvGatewayUrl}");

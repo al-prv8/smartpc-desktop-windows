@@ -19,10 +19,10 @@ namespace SensePC.Desktop.WinUI.Services
     {
         private readonly ISecureStorage _secureStorage;
         
-        // OAuth Configuration
-        private const string OAuthDomain = "auth.smartpc.cloud";
-        private const string CognitoClientId = "2lknj90rkjmtkcnph06q6r93ug";
-        private const string TokenEndpoint = "https://auth.smartpc.cloud/oauth2/token";
+        // Use centralized API configuration
+        private static readonly string OAuthDomain = ApiConfig.OAuthDomain;
+        private static readonly string CognitoClientId = ApiConfig.UserPoolClientId;
+        private static readonly string TokenEndpoint = ApiConfig.OAuthTokenEndpoint;
         
         // Fixed port for callback - MUST be registered in Cognito User Pool
         private const int CallbackPort = 8888;

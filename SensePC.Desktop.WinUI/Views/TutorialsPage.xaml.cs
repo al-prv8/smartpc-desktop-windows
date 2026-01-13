@@ -25,7 +25,7 @@ namespace SensePC.Desktop.WinUI.Views
                 Duration = "0:56",
                 Description = "Build a powerful cloud PC in minutes and access it from any browser, on any device, from anywhere—no hardware needed.",
                 VideoUrl = "https://d2dlj0hxnln4ry.cloudfront.net/SENSEPC%201.mp4",
-                ThumbnailUrl = "https://smartpc.cloud/assets/images/gettingStartedWithSensePc.png",
+                ThumbnailUrl = Services.ApiConfig.TutorialGettingStartedImage,
                 Category = "Start here",
                 Difficulty = "Beginner",
                 UploadDate = new DateTime(2025, 12, 25)
@@ -37,7 +37,7 @@ namespace SensePC.Desktop.WinUI.Views
                 Duration = "1:30",
                 Description = "See how SensePC delivers fast performance with built-in security—plus user management, billing, support ticketing, and in-app tutorials after login.",
                 VideoUrl = "https://d2dlj0hxnln4ry.cloudfront.net/SENSEPC%203.mp4",
-                ThumbnailUrl = "https://smartpc.cloud/assets/images/optimizing.jpg",
+                ThumbnailUrl = Services.ApiConfig.TutorialOptimizingImage,
                 Category = "Start here",
                 Difficulty = "Beginner",
                 UploadDate = new DateTime(2025, 12, 25)
@@ -49,7 +49,7 @@ namespace SensePC.Desktop.WinUI.Views
                 Duration = "0:50",
                 Description = "Securely store, organize, preview, and share files with smart cloud storage that stays synced across all your devices.",
                 VideoUrl = "https://d2dlj0hxnln4ry.cloudfront.net/SENSEPC%202.mp4",
-                ThumbnailUrl = "https://smartpc.cloud/assets/images/storageManagement.png",
+                ThumbnailUrl = Services.ApiConfig.TutorialStorageImage,
                 Category = "Start here",
                 Difficulty = "Beginner",
                 UploadDate = new DateTime(2025, 12, 25)
