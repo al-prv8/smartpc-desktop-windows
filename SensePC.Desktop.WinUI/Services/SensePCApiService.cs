@@ -3621,16 +3621,31 @@ namespace SensePC.Desktop.WinUI.Services
     public class MonthlySpending
     {
         [System.Text.Json.Serialization.JsonPropertyName("currentMonth")]
-        public decimal CurrentMonth { get; set; }
+        public System.Text.Json.JsonElement CurrentMonthRaw { get; set; }
+
+        public decimal CurrentMonth => GetDecimalFromJsonElement(CurrentMonthRaw);
 
         [System.Text.Json.Serialization.JsonPropertyName("lastMonth")]
-        public decimal LastMonth { get; set; }
+        public System.Text.Json.JsonElement LastMonthRaw { get; set; }
+
+        public decimal LastMonth => GetDecimalFromJsonElement(LastMonthRaw);
 
         [System.Text.Json.Serialization.JsonPropertyName("percentChange")]
-        public decimal PercentChange { get; set; }
+        public System.Text.Json.JsonElement PercentChangeRaw { get; set; }
+
+        public decimal PercentChange => GetDecimalFromJsonElement(PercentChangeRaw);
 
         [System.Text.Json.Serialization.JsonPropertyName("trend")]
         public string Trend { get; set; } = "no change";
+
+        private static decimal GetDecimalFromJsonElement(System.Text.Json.JsonElement element)
+        {
+            if (element.ValueKind == System.Text.Json.JsonValueKind.Number)
+                return element.GetDecimal();
+            if (element.ValueKind == System.Text.Json.JsonValueKind.String && decimal.TryParse(element.GetString(), out var val))
+                return val;
+            return 0;
+        }
     }
 
     /// <summary>
@@ -3689,7 +3704,13 @@ namespace SensePC.Desktop.WinUI.Services
         public bool HasMore { get; set; }
 
         [System.Text.Json.Serialization.JsonPropertyName("lastEvaluatedKey")]
-        public string? LastEvaluatedKey { get; set; }
+        public System.Text.Json.JsonElement? LastEvaluatedKeyRaw { get; set; }
+
+        public string? LastEvaluatedKey => LastEvaluatedKeyRaw?.ValueKind == System.Text.Json.JsonValueKind.String 
+            ? LastEvaluatedKeyRaw?.GetString() 
+            : (LastEvaluatedKeyRaw?.ValueKind == System.Text.Json.JsonValueKind.Object || LastEvaluatedKeyRaw?.ValueKind == System.Text.Json.JsonValueKind.Array
+                ? LastEvaluatedKeyRaw?.GetRawText()
+                : null);
     }
 
     /// <summary>
@@ -3704,9 +3725,19 @@ namespace SensePC.Desktop.WinUI.Services
         public string EventType { get; set; } = "";
 
         [System.Text.Json.Serialization.JsonPropertyName("amount")]
-        public string AmountStr { get; set; } = "0";
+        public System.Text.Json.JsonElement AmountRaw { get; set; }
 
-        public decimal Amount => decimal.TryParse(AmountStr, out var amt) ? amt : 0;
+        public decimal Amount
+        {
+            get
+            {
+                if (AmountRaw.ValueKind == System.Text.Json.JsonValueKind.Number)
+                    return AmountRaw.GetDecimal();
+                if (AmountRaw.ValueKind == System.Text.Json.JsonValueKind.String && decimal.TryParse(AmountRaw.GetString(), out var val))
+                    return val;
+                return 0;
+            }
+        }
 
         public string FormattedDate => !string.IsNullOrEmpty(EventTimestamp) && DateTime.TryParse(EventTimestamp, out var dt)
             ? dt.ToString("MMM dd, yyyy")
@@ -3738,7 +3769,13 @@ namespace SensePC.Desktop.WinUI.Services
         public bool HasMore { get; set; }
 
         [System.Text.Json.Serialization.JsonPropertyName("lastEvaluatedKey")]
-        public string? LastEvaluatedKey { get; set; }
+        public System.Text.Json.JsonElement? LastEvaluatedKeyRaw { get; set; }
+
+        public string? LastEvaluatedKey => LastEvaluatedKeyRaw?.ValueKind == System.Text.Json.JsonValueKind.String 
+            ? LastEvaluatedKeyRaw?.GetString() 
+            : (LastEvaluatedKeyRaw?.ValueKind == System.Text.Json.JsonValueKind.Object || LastEvaluatedKeyRaw?.ValueKind == System.Text.Json.JsonValueKind.Array
+                ? LastEvaluatedKeyRaw?.GetRawText()
+                : null);
     }
 
     /// <summary>
@@ -3809,7 +3846,13 @@ namespace SensePC.Desktop.WinUI.Services
         public bool HasMore { get; set; }
 
         [System.Text.Json.Serialization.JsonPropertyName("lastEvaluatedKey")]
-        public string? LastEvaluatedKey { get; set; }
+        public System.Text.Json.JsonElement? LastEvaluatedKeyRaw { get; set; }
+
+        public string? LastEvaluatedKey => LastEvaluatedKeyRaw?.ValueKind == System.Text.Json.JsonValueKind.String 
+            ? LastEvaluatedKeyRaw?.GetString() 
+            : (LastEvaluatedKeyRaw?.ValueKind == System.Text.Json.JsonValueKind.Object || LastEvaluatedKeyRaw?.ValueKind == System.Text.Json.JsonValueKind.Array
+                ? LastEvaluatedKeyRaw?.GetRawText()
+                : null);
     }
 
     /// <summary>

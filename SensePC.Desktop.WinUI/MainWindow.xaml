@@ -242,6 +242,391 @@
                         <!-- WebView2 will be added programmatically -->
                         <Grid x:Name="WebViewContainer"/>
                         
+                        <!-- Right Side Control Panel (like website pc-viewer) -->
+                        <Border x:Name="DCVControlPanel"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Stretch"
+                                Width="220"
+                                Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1,0,0,0"
+                                Visibility="Visible">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Header -->
+                                <Grid Grid.Row="0" Padding="12,12,8,8" 
+                                      Background="{ThemeResource LayerFillColorAltBrush}"
+                                      BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                      BorderThickness="0,0,0,1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <Border Grid.Column="0" 
+                                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="4" 
+                                            Width="32" Height="32">
+                                        <FontIcon Glyph="&#xE7F4;" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    
+                                    <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Name" FontSize="10" Opacity="0.6" CharacterSpacing="50"/>
+                                        <TextBlock x:Name="DCVPanelPCName" Text="—" FontSize="11" FontWeight="SemiBold" 
+                                                   TextTrimming="CharacterEllipsis" MaxWidth="100"/>
+                                    </StackPanel>
+                                    
+                                    <Button Grid.Column="2" 
+                                            Click="CloseDCVPanel_Click"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Padding="6"
+                                            ToolTipService.ToolTip="Close panel">
+                                        <FontIcon Glyph="&#xE711;" FontSize="12"/>
+                                    </Button>
+                                </Grid>
+
+                                <!-- Scrollable Content -->
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="12,12,12,0">
+                                    <StackPanel Spacing="12">
+                                        
+                                        <!-- Connection Status Card -->
+                                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="6"
+                                                Padding="12">
+                                            <StackPanel Spacing="10">
+                                                <TextBlock Text="Connection Status" FontSize="13" FontWeight="SemiBold"/>
+                                                
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="Status" FontSize="11" Opacity="0.7" VerticalAlignment="Center"/>
+                                                    <Border x:Name="DCVStatusBadge" Grid.Column="1" 
+                                                            Background="#1522C55E" CornerRadius="4" Padding="8,2">
+                                                        <TextBlock x:Name="DCVStatusText" Text="CONNECTED" FontSize="10" 
+                                                                   Foreground="#22C55E" FontWeight="SemiBold"/>
+                                                    </Border>
+                                                </Grid>
+                                                
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="Latency" FontSize="11" Opacity="0.7" VerticalAlignment="Center"/>
+                                                    <Border Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" 
+                                                            CornerRadius="4" Padding="8,2">
+                                                        <TextBlock x:Name="DCVLatencyText" Text="0ms" FontSize="10" FontFamily="Consolas"/>
+                                                    </Border>
+                                                </Grid>
+                                                
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="FPS" FontSize="11" Opacity="0.7" VerticalAlignment="Center"/>
+                                                    <Border Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" 
+                                                            CornerRadius="4" Padding="8,2">
+                                                        <TextBlock x:Name="DCVFpsText" Text="0" FontSize="10" FontFamily="Consolas"/>
+                                                    </Border>
+                                                </Grid>
+                                                
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="Uptime" FontSize="11" Opacity="0.7" VerticalAlignment="Center"/>
+                                                    <Border Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" 
+                                                            CornerRadius="4" Padding="8,2">
+                                                        <TextBlock x:Name="DCVUptimeText" Text="0m" FontSize="10" FontFamily="Consolas"/>
+                                                    </Border>
+                                                </Grid>
+                                                
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="Quality" FontSize="11" Opacity="0.7" VerticalAlignment="Center"/>
+                                                    <Border Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" 
+                                                            CornerRadius="4" Padding="8,2">
+                                                        <TextBlock x:Name="DCVQualityText" Text="0%" FontSize="10" FontFamily="Consolas"/>
+                                                    </Border>
+                                                </Grid>
+                                                
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="Data" FontSize="11" Opacity="0.7" VerticalAlignment="Center"/>
+                                                    <Border Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" 
+                                                            CornerRadius="4" Padding="8,2">
+                                                        <TextBlock x:Name="DCVDataText" Text="0 MB" FontSize="10" FontFamily="Consolas"/>
+                                                    </Border>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
+                                        
+                                        <!-- Quality Settings Card -->
+                                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="6"
+                                                Padding="12">
+                                            <StackPanel Spacing="8">
+                                                <TextBlock Text="Quality Settings" FontSize="13" FontWeight="SemiBold"/>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="Quality Preset" FontSize="11" Opacity="0.7" VerticalAlignment="Center"/>
+                                                    <Border Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" 
+                                                            CornerRadius="4" Padding="8,2">
+                                                        <TextBlock Text="Auto" FontSize="10" FontFamily="Consolas"/>
+                                                    </Border>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
+                                        
+                                        <!-- Input & Devices Card -->
+                                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="6">
+                                            <StackPanel>
+                                                <Border Padding="12,10" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
+                                                    <TextBlock Text="Input &amp; Devices" FontSize="13" FontWeight="SemiBold"/>
+                                                </Border>
+                                                <StackPanel Padding="12,8" Spacing="8">
+                                                    <!-- Camera -->
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="Camera" FontSize="11" Opacity="0.7" VerticalAlignment="Center"/>
+                                                        <Button x:Name="DCVCameraButton" Click="DCVCamera_Click" Padding="6,2" Height="22">
+                                                            <TextBlock x:Name="DCVCameraButtonText" Text="Enable" FontSize="10"/>
+                                                        </Button>
+                                                    </Grid>
+                                                    <!-- Microphone -->
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="Microphone" FontSize="11" Opacity="0.7" VerticalAlignment="Center"/>
+                                                        <Button x:Name="DCVMicButton" Click="DCVMic_Click" Padding="6,2" Height="22">
+                                                            <TextBlock x:Name="DCVMicButtonText" Text="Enable" FontSize="10"/>
+                                                        </Button>
+                                                    </Grid>
+                                                    <!-- Keyboard -->
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="Keyboard" FontSize="11" Opacity="0.7" VerticalAlignment="Center"/>
+                                                        <Border Grid.Column="1" Background="#1522C55E" CornerRadius="4" Padding="8,2">
+                                                            <TextBlock Text="Enabled" FontSize="10" Foreground="#22C55E"/>
+                                                        </Border>
+                                                    </Grid>
+                                                    <!-- Mouse -->
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="Mouse" FontSize="11" Opacity="0.7" VerticalAlignment="Center"/>
+                                                        <Border Grid.Column="1" Background="#1522C55E" CornerRadius="4" Padding="8,2">
+                                                            <TextBlock Text="Enabled" FontSize="10" Foreground="#22C55E"/>
+                                                        </Border>
+                                                    </Grid>
+                                                    <!-- Audio -->
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="Audio" FontSize="11" Opacity="0.7" VerticalAlignment="Center"/>
+                                                        <Border Grid.Column="1" Background="#1522C55E" CornerRadius="4" Padding="8,2">
+                                                            <TextBlock Text="Enabled" FontSize="10" Foreground="#22C55E"/>
+                                                        </Border>
+                                                    </Grid>
+                                                    <!-- Touch -->
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="Touch" FontSize="11" Opacity="0.7" VerticalAlignment="Center"/>
+                                                        <Border Grid.Column="1" Background="#1522C55E" CornerRadius="4" Padding="8,2">
+                                                            <TextBlock Text="Enabled" FontSize="10" Foreground="#22C55E"/>
+                                                        </Border>
+                                                    </Grid>
+                                                    <!-- USB (Desktop advantage) -->
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="USB" FontSize="11" Opacity="0.7" VerticalAlignment="Center"/>
+                                                        <Border Grid.Column="1" Background="#1522C55E" CornerRadius="4" Padding="8,2">
+                                                            <TextBlock Text="Enabled" FontSize="10" Foreground="#22C55E"/>
+                                                        </Border>
+                                                    </Grid>
+                                                    <!-- VR -->
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="VR" FontSize="11" Opacity="0.7" VerticalAlignment="Center"/>
+                                                        <Border Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="4" Padding="8,2">
+                                                            <TextBlock Text="Disabled" FontSize="10" Opacity="0.6"/>
+                                                        </Border>
+                                                    </Grid>
+                                                    <!-- Clipboard -->
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="Clipboard Sync" FontSize="11" Opacity="0.7" VerticalAlignment="Center"/>
+                                                        <Border Grid.Column="1" Background="#1522C55E" CornerRadius="4" Padding="8,2">
+                                                            <TextBlock Text="Enabled" FontSize="10" Foreground="#22C55E"/>
+                                                        </Border>
+                                                    </Grid>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+                                        
+                                        <!-- File Transfer Card -->
+                                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="6"
+                                                Padding="12">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="File Transfer" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                <Button Grid.Column="1" 
+                                                        Click="DCVFileTransfer_Click"
+                                                        ToolTipService.ToolTip="Open File Storage"
+                                                        Padding="6"
+                                                        Width="28" Height="28">
+                                                    <FontIcon Glyph="&#xE896;" FontSize="14"/>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                        
+                                    </StackPanel>
+                                </ScrollViewer>
+
+                                <!-- Bottom Session Control -->
+                                <Border Grid.Row="2" 
+                                        Background="{ThemeResource LayerFillColorAltBrush}"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        BorderThickness="0,1,0,0"
+                                        Padding="12">
+                                    <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Padding="10">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="Session Control" FontSize="11" FontWeight="SemiBold"/>
+                                            
+                                            <!-- Control Buttons Row -->
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                
+                                                <Button Grid.Column="0" 
+                                                        Click="DCVNewWindow_Click"
+                                                        ToolTipService.ToolTip="Open in New Window"
+                                                        HorizontalAlignment="Stretch"
+                                                        Margin="0,0,4,0"
+                                                        Padding="0"
+                                                        Height="32">
+                                                    <FontIcon Glyph="&#xE78B;" FontSize="14"/>
+                                                </Button>
+                                                
+                                                <Button Grid.Column="1" 
+                                                        Click="DCVKeyboard_Click"
+                                                        ToolTipService.ToolTip="On-Screen Keyboard (Ctrl+Win+O)"
+                                                        HorizontalAlignment="Stretch"
+                                                        Margin="2,0"
+                                                        Padding="0"
+                                                        Height="32">
+                                                    <FontIcon Glyph="&#xE765;" FontSize="14"/>
+                                                </Button>
+                                                
+                                                <Button Grid.Column="2" 
+                                                        x:Name="DCVFullscreenButton"
+                                                        Click="DCVFullscreen_Click"
+                                                        ToolTipService.ToolTip="Toggle Fullscreen"
+                                                        HorizontalAlignment="Stretch"
+                                                        Margin="4,0,0,0"
+                                                        Padding="0"
+                                                        Height="32">
+                                                    <FontIcon x:Name="DCVFullscreenIcon" Glyph="&#xE740;" FontSize="14"/>
+                                                </Button>
+                                            </Grid>
+                                            
+                                            <!-- Disconnect Button -->
+                                            <Button x:Name="DCVDisconnectButton"
+                                                    Click="DCVDisconnect_Click"
+                                                    HorizontalAlignment="Stretch"
+                                                    Height="36"
+                                                    Background="#DC2626">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <FontIcon Glyph="&#xE7E8;" FontSize="14" Foreground="White"/>
+                                                    <TextBlock Text="Disconnect" Foreground="White" FontWeight="SemiBold"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </Border>
+                                </Border>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Panel Toggle Handle (when panel is closed) -->
+                        <Border x:Name="DCVPanelHandle"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Width="24"
+                                Height="60"
+                                Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1,1,0,1"
+                                CornerRadius="6,0,0,6"
+                                Visibility="Collapsed"
+                                PointerPressed="DCVPanelHandle_Click">
+                            <FontIcon Glyph="&#xE76B;" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
 
                         <Border x:Name="NoSessionSelected"
                                 Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"

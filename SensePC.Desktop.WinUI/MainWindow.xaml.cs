@@ -411,6 +411,9 @@ namespace SensePC.Desktop.WinUI
                 _activeSessionWebView.Visibility = Visibility.Visible;
             }
             
+            // Update the control panel with session info
+            UpdateDCVPanelInfo(session);
+            
             await InitializeWebViewAndConnectAsync(session);
         }
 
@@ -594,6 +597,139 @@ namespace SensePC.Desktop.WinUI
             // Navigate to SensePC page
             NavView.SelectedItem = NavSensePC;
             DashboardFrame.Navigate(typeof(Views.SensePCPage));
+        }
+
+        #endregion
+
+        #region DCV Control Panel
+
+        private DateTime _sessionStartTime;
+        private DispatcherTimer? _uptimeTimer;
+        private bool _isDCVPanelOpen = true;
+
+        private void StartSessionUptime()
+        {
+            _sessionStartTime = DateTime.Now;
+            
+            _uptimeTimer?.Stop();
+            _uptimeTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+            _uptimeTimer.Tick += (s, e) =>
+            {
+                var elapsed = DateTime.Now - _sessionStartTime;
+                if (elapsed.TotalHours >= 1)
+                {
+                    DCVUptimeText.Text = $"{(int)elapsed.TotalHours}h {elapsed.Minutes}m";
+                }
+                else
+                {
+                    DCVUptimeText.Text = $"{elapsed.Minutes}m {elapsed.Seconds}s";
+                }
+            };
+            _uptimeTimer.Start();
+        }
+
+        private void StopSessionUptime()
+        {
+            _uptimeTimer?.Stop();
+            _uptimeTimer = null;
+        }
+
+        private void UpdateDCVPanelInfo(SessionInfo session)
+        {
+            DCVPanelPCName.Text = session.SystemName;
+            DCVStatusText.Text = "CONNECTED";
+            DCVStatusBadge.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0x15, 0x22, 0xC5, 0x5E));
+            DCVStatusText.Foreground = new SolidColorBrush(Windows.UI.Color.FromArgb(0xFF, 0x22, 0xC5, 0x5E));
+            StartSessionUptime();
+        }
+
+        private void CloseDCVPanel_Click(object sender, RoutedEventArgs e)
+        {
+            _isDCVPanelOpen = false;
+            DCVControlPanel.Visibility = Visibility.Collapsed;
+            DCVPanelHandle.Visibility = Visibility.Visible;
+        }
+
+        private void DCVPanelHandle_Click(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            _isDCVPanelOpen = true;
+            DCVControlPanel.Visibility = Visibility.Visible;
+            DCVPanelHandle.Visibility = Visibility.Collapsed;
+        }
+
+        private void DCVNewWindow_Click(object sender, RoutedEventArgs e)
+        {
+            // Open the current session in a new window (future enhancement)
+            // For now, show a message
+            System.Diagnostics.Debug.WriteLine("Open in new window clicked");
+        }
+
+        private void DCVKeyboard_Click(object sender, RoutedEventArgs e)
+        {
+            // Send Ctrl+Win+O to trigger on-screen keyboard in Windows
+            // This is handled via the DCV connection
+            System.Diagnostics.Debug.WriteLine("On-screen keyboard clicked");
+        }
+
+        private void DCVFullscreen_Click(object sender, RoutedEventArgs e)
+        {
+            var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(
+                Microsoft.UI.Win32Interop.GetWindowIdFromWindow(
+                    WinRT.Interop.WindowNative.GetWindowHandle(this)));
+            
+            if (appWindow.Presenter.Kind == Microsoft.UI.Windowing.AppWindowPresenterKind.FullScreen)
+            {
+                appWindow.SetPresenter(Microsoft.UI.Windowing.AppWindowPresenterKind.Default);
+                DCVFullscreenIcon.Glyph = "\uE740"; // Maximize icon
+            }
+            else
+            {
+                appWindow.SetPresenter(Microsoft.UI.Windowing.AppWindowPresenterKind.FullScreen);
+                DCVFullscreenIcon.Glyph = "\uE73F"; // Minimize/restore icon
+            }
+        }
+
+        private void DCVDisconnect_Click(object sender, RoutedEventArgs e)
+        {
+            // Update status to disconnected
+            DCVStatusText.Text = "DISCONNECTED";
+            DCVStatusBadge.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0x15, 0xEF, 0x44, 0x44));
+            DCVStatusText.Foreground = new SolidColorBrush(Windows.UI.Color.FromArgb(0xFF, 0xEF, 0x44, 0x44));
+            
+            StopSessionUptime();
+            
+            // Close the current session
+            if (_selectedSession != null)
+            {
+                CloseSession(_selectedSession.InstanceId);
+            }
+        }
+
+        private bool _cameraEnabled = false;
+        private bool _micEnabled = false;
+
+        private void DCVCamera_Click(object sender, RoutedEventArgs e)
+        {
+            _cameraEnabled = !_cameraEnabled;
+            DCVCameraButtonText.Text = _cameraEnabled ? "Disable" : "Enable";
+            System.Diagnostics.Debug.WriteLine($"Camera {(_cameraEnabled ? "enabled" : "disabled")}");
+        }
+
+        private void DCVMic_Click(object sender, RoutedEventArgs e)
+        {
+            _micEnabled = !_micEnabled;
+            DCVMicButtonText.Text = _micEnabled ? "Disable" : "Enable";
+            System.Diagnostics.Debug.WriteLine($"Microphone {(_micEnabled ? "enabled" : "disabled")}");
+        }
+
+        private void DCVFileTransfer_Click(object sender, RoutedEventArgs e)
+        {
+            // Open file transfer dialog/modal
+            System.Diagnostics.Debug.WriteLine("File transfer clicked");
+            // TODO: Implement file transfer modal
         }
 
         #endregion
